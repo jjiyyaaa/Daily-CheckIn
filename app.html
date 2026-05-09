@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Check-in ✨ — App</title>
+  <meta name="description"
+    content="Aplikasi journaling personal harian — journal, tugas, spiritual, dan entertainment tracker." />
+  <script>
+    // Auth Guard — runs before page renders
+    (function () {
+      const s =
+        sessionStorage.getItem("dc_session") ||
+        localStorage.getItem("dc_session");
+      if (!s) {
+        window.location.replace("login.html");
+        return;
+      }
+      try {
+        const p = JSON.parse(s);
+        if (!p || !p.username) window.location.replace("login.html");
+      } catch {
+        window.location.replace("login.html");
+      }
+    })();
+  </script>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+
+<body class="app-body">
+  <!-- ── MOBILE TOPBAR ── -->
+  <div class="topbar" id="topbar">
+    <div class="topbar-logo"><span>🌸</span> Daily Check-in</div>
+    <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a href="index.html" class="sidebar-logo"><span class="logo-icon">🌸</span>Daily Check-in</a>
+      <div class="sidebar-date" id="sidebar-date">Loading…</div>
+      <div class="sidebar-user" id="sidebar-user">
+        <span class="sidebar-user-avatar">👤</span>
+        <span class="sidebar-user-name" id="sidebar-user-name">...</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav" aria-label="Main navigation">
+      <div class="nav-label">Main</div>
+      <button class="nav-item active" data-page="dashboard" id="nav-dashboard">
+        <span class="nav-icon">🏠</span> Dashboard
+      </button>
+      <div class="nav-label">Daily</div>
+      <button class="nav-item" data-page="journal" id="nav-journal">
+        <span class="nav-icon">📔</span> Journaling
+      </button>
+      <button class="nav-item" data-page="productivity" id="nav-productivity">
+        <span class="nav-icon">✅</span> Productivity
+      </button>
+      <div class="nav-label">Spiritual</div>
+      <button class="nav-item" data-page="spiritual" id="nav-spiritual">
+        <span class="nav-icon">🕌</span> Spiritual
+      </button>
+      <button class="nav-item" data-page="puasa" id="nav-puasa">
+        <span class="nav-icon">🌙</span> Puasa Tracker
+      </button>
+      <div class="nav-label">More</div>
+      <button class="nav-item" data-page="entertainment" id="nav-entertainment">
+        <span class="nav-icon">🎬</span> Entertainment
+      </button>
+      <div class="nav-label">Reflect</div>
+      <button class="nav-item" data-page="recap" id="nav-recap">
+        <span class="nav-icon">📊</span> Recap &amp; Analytics
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" id="logout-btn" onclick="handleLogout()">
+        🚪 Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="app-main" id="app-main">
+    <!-- ═══════════ DASHBOARD ═══════════ -->
+    <section class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1 class="page-title" id="greeting-text">Good morning! ☀️</h1>
+        <p class="page-sub" id="today-full-date">Loading…</p>
+      </div>
+
+      <!-- Quote -->
+      <div class="quote-card mb-24" id="quote-card">
+        <div class="quote-text" id="quote-text">
+          <span class="quote-loading">✨ Fetching your daily quote…</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+          <div class="quote-author" id="quote-author"></div>
+          <button onclick="fetchQuote()" title="Get new quote"
+            style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--pink-deep);font-weight:600;padding:4px 8px;border-radius:8px;transition:background 0.2s;"
+            onmouseover="this.style.background='rgba(255,133,161,0.1)'" onmouseout="this.style.background='none'">
+            🔄 New
+          </button>
+        </div>
+      </div>
+
+      <!-- Daily Tip from Advice API -->
+      <div class="module-card accent-mint mb-24" id="dashboard-tip" style="padding:18px 22px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span>💡</span>
+          <span style="font-size:0.85rem;color:var(--text-light);">Loading daily tip…</span>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <h2 class="section-title mb-16">📋 Today's Overview</h2>
+      <div class="quick-stats mb-24">
+        <div class="stat-card" style="--stat-color: var(--mint)">
+          <div class="stat-card-icon">✅</div>
+          <div class="stat-card-val" id="stat-tasks">0/0</div>
+          <div class="stat-card-label">Tasks Completed</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--sky)">
+          <div class="stat-card-icon">😊</div>
+          <div class="stat-card-val" id="stat-mood">—</div>
+          <div class="stat-card-label">Today's Mood</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--mint)">
+          <div class="stat-card-icon">📖</div>
+          <div class="stat-card-val" id="stat-tilawah">0 lbr</div>
+          <div class="stat-card-label">Tilawah Today</div>
+        </div>
+        <div class="stat-card" style="--stat-color: var(--lavender)">
+          <div class="stat-card-icon">🎬</div>
+          <div class="stat-card-val" id="stat-movies">0</div>
+          <div class="stat-card-label">Movies Logged</div>
+        </div>
+      </div>
+
+      <!-- Habit overview -->
+      <h2 class="section-title mb-16">💪 Habit Check</h2>
+      <div class="module-card accent-yellow" id="dashboard-habits">
+        <div class="empty-state">
+          <div class="empty-icon">🌱</div>
+          <p>No habits added yet.<br />Go to Productivity to add habits!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ JOURNALING ═══════════ -->
+    <section class="page" id="page-journal">
+      <div class="page-header">
+        <h1 class="page-title">📔 Journaling</h1>
+        <p class="page-sub">Check-in harian kamu — jujur, apa adanya 💕</p>
+      </div>
+
+      <!-- Mood -->
+      <div class="module-card accent-sky mb-24">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom: 0">
+            😊 Mood Tracker
+          </h2>
+          <span id="selected-mood-label" class="badge" style="background: var(--sky-light); color: #3a7a8a"></span>
+        </div>
+        <div class="mood-grid" id="mood-grid">
+          <button class="mood-btn" data-mood="happy" data-label="Happy" style="
+                --mood-color: var(--yellow);
+                --mood-bg: var(--yellow-light);
+              " onclick="selectMood(this)">
+            <span class="mood-emoji">😊</span><span class="mood-label">Happy</span>
+          </button>
+          <button class="mood-btn" data-mood="loved" data-label="Loved" style="
+                --mood-color: var(--pink-deep);
+                --mood-bg: var(--pink-light);
+              " onclick="selectMood(this)">
+            <span class="mood-emoji">🥰</span><span class="mood-label">Loved</span>
+          </button>
+          <button class="mood-btn" data-mood="calm" data-label="Calm"
+            style="--mood-color: var(--mint); --mood-bg: var(--mint-light)" onclick="selectMood(this)">
+            <span class="mood-emoji">😌</span><span class="mood-label">Calm</span>
+          </button>
+          <button class="mood-btn" data-mood="anxious" data-label="Anxious"
+            style="--mood-color: var(--peach); --mood-bg: var(--peach-light)" onclick="selectMood(this)">
+            <span class="mood-emoji">😰</span><span class="mood-label">Anxious</span>
+          </button>
+          <button class="mood-btn" data-mood="sad" data-label="Sad"
+            style="--mood-color: var(--sky); --mood-bg: var(--sky-light)" onclick="selectMood(this)">
+            <span class="mood-emoji">😢</span><span class="mood-label">Sad</span>
+          </button>
+          <button class="mood-btn" data-mood="angry" data-label="Angry"
+            style="--mood-color: var(--coral); --mood-bg: var(--coral-light)" onclick="selectMood(this)">
+            <span class="mood-emoji">😤</span><span class="mood-label">Angry</span>
+          </button>
+          <button class="mood-btn" data-mood="tired" data-label="Tired"
+            style="--mood-color: var(--lavender); --mood-bg: var(--lav-light)" onclick="selectMood(this)">
+            <span class="mood-emoji">😴</span><span class="mood-label">Tired</span>
+          </button>
+          <button class="mood-btn" data-mood="excited" data-label="Excited" style="
+                --mood-color: var(--yellow);
+                --mood-bg: var(--yellow-light);
+              " onclick="selectMood(this)">
+            <span class="mood-emoji">🤩</span><span class="mood-label">Excited</span>
+          </button>
+          <button class="mood-btn" data-mood="flat" data-label="Flat"
+            style="--mood-color: var(--gray-400); --mood-bg: var(--gray-100)" onclick="selectMood(this)">
+            <span class="mood-emoji">😐</span><span class="mood-label">Flat</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Vibe -->
+      <div class="module-card accent-pink mb-24">
+        <h2 class="section-title">🌈 A Line a Day — Today's Vibe</h2>
+        <div class="vibe-grid" id="vibe-grid">
+          <button class="vibe-btn" data-vibe="Normal" style="
+                --vibe-color: var(--sky-light);
+                --vibe-border: var(--sky);
+                --vibe-text: #3a7a8a;
+              " onclick="selectVibe(this)">
+            😐 Normal
+          </button>
+          <button class="vibe-btn" data-vibe="Produktif" style="
+                --vibe-color: var(--mint-light);
+                --vibe-border: var(--mint);
+                --vibe-text: #3a8a6a;
+              " onclick="selectVibe(this)">
+            ⚡ Produktif
+          </button>
+          <button class="vibe-btn" data-vibe="Hectic" style="
+                --vibe-color: var(--coral-light);
+                --vibe-border: var(--coral);
+                --vibe-text: #a05040;
+              " onclick="selectVibe(this)">
+            🌪️ Hectic
+          </button>
+          <button class="vibe-btn" data-vibe="Mager" style="
+                --vibe-color: var(--lav-light);
+                --vibe-border: var(--lavender);
+                --vibe-text: #7b5ea7;
+              " onclick="selectVibe(this)">
+            🛋️ Mager
+          </button>
+          <button class="vibe-btn" data-vibe="Healing" style="
+                --vibe-color: var(--peach-light);
+                --vibe-border: var(--peach);
+                --vibe-text: #a06040;
+              " onclick="selectVibe(this)">
+            🌸 Healing
+          </button>
+        </div>
+        <label for="aline-note-input" style="
+              margin-top: 12px;
+              display: block;
+              font-size: 0.9rem;
+              color: var(--text-mid);
+            ">Kenapa hari ini punya vibe ini?</label>
+        <textarea id="aline-note-input" placeholder="Misal: Produktif karena presentasi lancar..." rows="3"
+          oninput="saveJournal()"></textarea>
+      </div>
+
+      <div class="module-card accent-yellow mb-24">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom: 0">
+            📝 Daily To-Do List
+          </h2>
+          <span class="badge" style="background: var(--yellow-light); color: #a08040">Journal Task</span>
+        </div>
+        <div class="journal-input-row">
+          <input type="text" id="journal-todo-input" placeholder="Tambah tugas harian..." onkeydown="
+                if (event.key === 'Enter') {
+                  addJournalTodo();
+                }
+              " />
+          <button class="btn btn-primary btn-sm" onclick="addJournalTodo()">
+            + Add
+          </button>
+        </div>
+        <div id="journal-todo-list" class="journal-list-card"></div>
+      </div>
+
+      <!-- Gratitude -->
+      <div class="module-card accent-sky mb-24">
+        <h2 class="section-title">🙏 Gratitude</h2>
+        <label for="gratitude-input">Hal yang aku syukuri hari ini…</label>
+        <textarea id="gratitude-input" placeholder="Cuaca yang cerah, kopi yang enak, teman yang supportive…" rows="3"
+          oninput="saveJournal()"></textarea>
+      </div>
+
+      <!-- Brain Dump -->
+      <div class="module-card accent-pink mb-24">
+        <h2 class="section-title">🧠 Brain Dump</h2>
+        <label for="braindump-input">Ide & pikiran yang tiba-tiba muncul (unfiltered!) ✨</label>
+        <textarea id="braindump-input"
+          placeholder="Aku pengen bikin podcast, atau mungkin belajar ukulele? Atau nulis buku???" rows="4"
+          oninput="saveJournal()"></textarea>
+      </div>
+
+      <div class="grid-2">
+        <div class="module-card accent-mint mb-24">
+          <h2 class="section-title">🌟 Positive Acts</h2>
+          <div class="journal-input-row">
+            <input type="text" id="positive-act-input" placeholder="Tulis tindakan baikmu hari ini..." onkeydown="
+                  if (event.key === 'Enter') {
+                    addPositiveAct();
+                  }
+                " />
+            <button class="btn btn-primary btn-sm" onclick="addPositiveAct()">
+              + Add
+            </button>
+          </div>
+          <div id="positive-act-list" class="journal-list-card"></div>
+        </div>
+
+        <div class="module-card accent-peach mb-24">
+          <h2 class="section-title">🎁 Wishlist</h2>
+          <div class="journal-input-row">
+            <input type="text" id="wishlist-input" placeholder="Barang atau goals yang kamu inginkan..." onkeydown="
+                  if (event.key === 'Enter') {
+                    addWishlistItem();
+                  }
+                " />
+            <button class="btn btn-primary btn-sm" onclick="addWishlistItem()">
+              + Add
+            </button>
+          </div>
+          <div id="wishlist-list" class="journal-list-card"></div>
+        </div>
+      </div>
+
+      <div class="module-card accent-pink mb-24 affirmation-card">
+        <h2 class="section-title">💬 Words of Affirmation</h2>
+        <label for="affirmation-input">Tulis kalimat penyemangat untuk diri sendiri.</label>
+        <textarea id="affirmation-input" placeholder="Saya cukup, saya berkembang, saya melakukan yang terbaik."
+          rows="4" oninput="saveJournal()"></textarea>
+      </div>
+
+      <button class="btn btn-primary w-full" onclick="
+            saveJournal();
+            showToast('Journal saved! 💕', 'success');
+          ">
+        💾 Save Journal Entry
+      </button>
+    </section>
+
+    <!-- ═══════════ PRODUCTIVITY ═══════════ -->
+    <section class="page" id="page-productivity">
+      <div class="page-header">
+        <h1 class="page-title">✅ Productivity</h1>
+        <p class="page-sub">
+          Kelola tugas, pelajaran, dan kebiasaan harian kamu 💪
+        </p>
+      </div>
+
+      <!-- Tasks -->
+      <div class="module-card accent-yellow mb-24">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom: 0">
+            📝 Task Tracker
+          </h2>
+          <button class="btn btn-outline btn-sm" id="notif-btn" onclick="requestNotifPermission()"
+            title="Aktifkan notifikasi tenggat">
+            🔔 Notifikasi
+          </button>
+        </div>
+        <div class="task-add-wrap mt-16">
+          <div class="task-input-row">
+            <input type="text" id="task-input" placeholder="Tambah tugas baru…"
+              onkeydown="if (event.key === 'Enter') addTask();" />
+            <input type="datetime-local" id="task-deadline" />
+            <button class="btn btn-primary btn-sm" onclick="addTask()" id="add-task-btn">
+              + Add
+            </button>
+          </div>
+        </div>
+        <div class="task-list" id="task-list">
+          <div class="empty-state">
+            <div class="empty-icon">✨</div>
+            <p>Belum ada tugas!<br />Tambahkan tugas pertamamu.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Study Log -->
+      <div class="module-card accent-sky mb-24" id="study-log-card">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom: 0">📚 Study Log</h2>
+          <span id="study-day-badge" class="badge"></span>
+        </div>
+        <div id="study-log-content">
+          <div class="grid-2 mb-16">
+            <div>
+              <label for="study-subject">Mata Kuliah / Skill</label>
+              <input type="text" id="study-subject" placeholder="Contoh: Algoritma, React JS…" />
+            </div>
+            <div>
+              <label for="study-duration">Durasi (menit)</label>
+              <input type="number" id="study-duration" placeholder="60" min="1" />
+            </div>
+          </div>
+          <div class="mb-16">
+            <label>Jenis Belajar</label>
+            <div class="type-pills" id="study-type-pills">
+              <button class="type-pill selected" data-type="Hard Skill" onclick="selectStudyType(this)">
+                💪 Hard Skill
+              </button>
+              <button class="type-pill" data-type="Soft Skill" onclick="selectStudyType(this)">
+                🤝 Soft Skill
+              </button>
+              <button class="type-pill" data-type="Matkul" onclick="selectStudyType(this)">
+                🎓 Matkul
+              </button>
+            </div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="addStudyLog()">
+            + Log Belajar
+          </button>
+          <div class="study-list mt-16" id="study-list">
+            <div class="empty-state" style="padding: 20px 0">
+              <div class="empty-icon" style="font-size: 2rem">📖</div>
+              <p>Belum ada log belajar hari ini.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Habits -->
+      <div class="module-card accent-mint mb-24">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom: 0">
+            💪 Habit Tracker
+          </h2>
+        </div>
+        <div class="task-input-row mb-16">
+          <input type="text" id="habit-name-input" placeholder="Tambah habit baru (contoh: Minum air 8 gelas)…"
+            onkeydown="if (event.key === 'Enter') addHabit();" />
+          <button class="btn btn-primary btn-sm" onclick="addHabit()">
+            + Add
+          </button>
+        </div>
+        <div class="habit-list" id="habit-list">
+          <div class="empty-state">
+            <div class="empty-icon">🌱</div>
+            <p>Belum ada habit.<br />Mulai tambah kebiasaan baik kamu!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ SPIRITUAL ═══════════ -->
+    <section class="page" id="page-spiritual">
+      <div class="page-header">
+        <h1 class="page-title">🕌 Spiritual</h1>
+        <p class="page-sub">Tracking tilawah harian kamu ✨</p>
+      </div>
+
+      <div class="module-card accent-mint mb-24">
+        <h2 class="section-title">📖 Tilawah Hari Ini</h2>
+        <div class="tilawah-progress-wrap">
+          <div class="tilawah-ring">
+            <svg viewBox="0 0 110 110" width="110" height="110">
+              <circle class="ring-bg" cx="55" cy="55" r="48" />
+              <circle class="ring-fill" id="ring-fill" cx="55" cy="55" r="48" stroke-dasharray="301.6"
+                stroke-dashoffset="301.6" stroke="var(--mint)" />
+            </svg>
+            <div class="ring-text">
+              <span class="ring-val" id="ring-val">0</span>
+              <span class="ring-unit">lembar</span>
+            </div>
+          </div>
+          <div class="tilawah-meta">
+            <h3>Target: 5 Lembar/Hari</h3>
+            <div class="tilawah-status" id="tilawah-status" style="
+                  background: var(--gray-100);
+                  color: var(--text-light);
+                  margin-top: 8px;
+                ">
+              ○ Belum mulai
+            </div>
+            <p style="
+                  font-size: 0.82rem;
+                  color: var(--text-light);
+                  margin-top: 8px;
+                  line-height: 1.5;
+                ">
+              Hijau = target tercapai (≥5 lembar)<br />
+              Merah mudar = belum tilawah sama sekali
+            </p>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-16">
+          <div>
+            <label for="tilawah-pages">Jumlah Lembar</label>
+            <input type="number" id="tilawah-pages" placeholder="0" min="0" max="50" oninput="updateTilawahRing()" />
+          </div>
+          <div>
+            <label for="tilawah-juz">Juz</label>
+            <input type="number" id="tilawah-juz" placeholder="1" min="1" max="30" />
+          </div>
+        </div>
+        <div class="grid-2 mb-16">
+          <div>
+            <label for="tilawah-surah">Nama Surat</label>
+            <input type="text" id="tilawah-surah" placeholder="Al-Baqarah" />
+          </div>
+          <div>
+            <label for="tilawah-ayat">Ayat</label>
+            <input type="text" id="tilawah-ayat" placeholder="1 - 20" />
+          </div>
+        </div>
+        <div class="mb-16">
+          <label for="tilawah-notes">📝 Catatan Ayat Menarik</label>
+          <textarea id="tilawah-notes" placeholder="Ayat yang berkesan atau tafsir singkat…" rows="3"></textarea>
+        </div>
+        <button class="btn btn-primary w-full" onclick="saveTilawah()">
+          💾 Save Tilawah
+        </button>
+      </div>
+
+      <!-- Previous notes -->
+      <div class="module-card accent-mint" id="tilawah-log-card">
+        <h2 class="section-title">📜 Catatan Tilawah Terbaru</h2>
+        <div id="tilawah-log-list">
+          <div class="empty-state">
+            <div class="empty-icon">🌿</div>
+            <p>Belum ada catatan tilawah.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ PUASA TRACKER ═══════════ -->
+    <section class="page" id="page-puasa">
+      <div class="page-header">
+        <h1 class="page-title">🌙 Puasa Tracker</h1>
+        <p class="page-sub">Catat & lacak ibadah puasa kamu 🤲</p>
+      </div>
+
+      <!-- Today's fasting card -->
+      <div class="module-card accent-mint mb-24">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom: 0">
+            📅 Puasa Hari Ini
+          </h2>
+          <span id="puasa-today-badge" class="badge" style="background: var(--gray-100); color: var(--text-light)">Belum
+            dicatat</span>
+        </div>
+
+        <!-- Toggle Puasa -->
+        <div class="puasa-toggle-wrap mb-16">
+          <span style="
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: var(--text-mid);
+              ">Puasa hari ini?</span>
+          <div class="puasa-toggle-btns" id="puasa-toggle-btns">
+            <button class="puasa-yn-btn" data-val="ya" onclick="setPuasaToggle(this)" id="btn-puasa-ya">
+              ✅ Ya
+            </button>
+            <button class="puasa-yn-btn" data-val="tidak" onclick="setPuasaToggle(this)" id="btn-puasa-tidak">
+              ❌ Tidak
+            </button>
+          </div>
+        </div>
+
+        <!-- Form (shown only if Ya) -->
+        <div id="puasa-form" class="hidden">
+          <div class="mb-16">
+            <label>Jenis Puasa</label>
+            <div class="type-pills" id="puasa-type-pills">
+              <button class="type-pill selected" data-type="Sunnah Senin-Kamis" onclick="selectPuasaType(this)">
+                🌙 Senin-Kamis
+              </button>
+              <button class="type-pill" data-type="Sunnah Ayyamul Bidh" onclick="selectPuasaType(this)">
+                🌕 Ayyamul Bidh
+              </button>
+              <button class="type-pill" data-type="Sunnah Daud" onclick="selectPuasaType(this)">
+                ⚡ Daud
+              </button>
+              <button class="type-pill" data-type="Wajib Qadha" onclick="selectPuasaType(this)">
+                📋 Qadha
+              </button>
+              <button class="type-pill" data-type="Wajib Ramadan" onclick="selectPuasaType(this)">
+                ☪️ Ramadan
+              </button>
+              <button class="type-pill" data-type="Lainnya" onclick="selectPuasaType(this)">
+                ✨ Lainnya
+              </button>
+            </div>
+          </div>
+          <div class="grid-2 mb-16">
+            <div>
+              <label for="puasa-niat">Niat / Catatan</label>
+              <input type="text" id="puasa-niat" placeholder="Niat puasa Senin-Kamis lillahi ta'ala…" />
+            </div>
+            <div>
+              <label for="puasa-buka">Waktu Buka (opsional)</label>
+              <input type="time" id="puasa-buka" />
+            </div>
+          </div>
+          <div class="mb-16">
+            <label for="puasa-notes">Catatan Tambahan</label>
+            <textarea id="puasa-notes" rows="2"
+              placeholder="Alhamdulillah lancar, sempat ngantuk sore tapi kuat!"></textarea>
+          </div>
+        </div>
+
+        <button class="btn btn-primary w-full" onclick="savePuasa()">
+          💾 Save Log Puasa
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid-3 mb-24">
+        <div class="recap-stat" style="--r-color: var(--mint)">
+          <div class="recap-stat-val" id="puasa-streak">0</div>
+          <div class="recap-stat-label">🔥 Streak Saat Ini</div>
+        </div>
+        <div class="recap-stat" style="--r-color: var(--sky)">
+          <div class="recap-stat-val" id="puasa-total-month">0</div>
+          <div class="recap-stat-label">📅 Bulan Ini</div>
+        </div>
+        <div class="recap-stat" style="--r-color: var(--lavender)">
+          <div class="recap-stat-val" id="puasa-total-all">0</div>
+          <div class="recap-stat-label">📊 Total Tercatat</div>
+        </div>
+      </div>
+
+      <!-- Calendar heatmap (last 30 days) -->
+      <div class="module-card accent-mint mb-24">
+        <h2 class="section-title">📆 30 Hari Terakhir</h2>
+        <div id="puasa-calendar" class="puasa-calendar"></div>
+        <div class="puasa-legend">
+          <span class="legend-dot" style="background: var(--mint)"></span><span>Puasa</span>
+          <span class="legend-dot" style="background: var(--coral-light)"></span><span>Tidak puasa</span>
+          <span class="legend-dot" style="background: var(--gray-200)"></span><span>Belum dicatat</span>
+        </div>
+      </div>
+
+      <!-- Log history -->
+      <div class="module-card accent-mint">
+        <h2 class="section-title">📜 Riwayat Puasa Terbaru</h2>
+        <div id="puasa-log-list">
+          <div class="empty-state">
+            <div class="empty-icon">🌙</div>
+            <p>Belum ada catatan puasa.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ ENTERTAINMENT ═══════════ -->
+    <section class="page" id="page-entertainment">
+      <div class="page-header">
+        <h1 class="page-title">🎬 Entertainment</h1>
+        <p class="page-sub">
+          Catat semua film & series yang udah kamu tonton 🍿
+        </p>
+      </div>
+
+      <div class="module-card accent-lav mb-24">
+        <h2 class="section-title">➕ Add to Watch List</h2>
+        <div class="grid-2 mb-16">
+          <div>
+            <label for="watch-title">Judul Film / Series</label>
+            <input type="text" id="watch-title" placeholder="Dune: Part Two" />
+          </div>
+          <div>
+            <label for="watch-date">Tanggal Nonton</label>
+            <input type="date" id="watch-date" />
+          </div>
+        </div>
+        <div class="grid-2 mb-16">
+          <div>
+            <label for="watch-location">Lokasi Nonton</label>
+            <input type="text" id="watch-location" placeholder="Bioskop / Netflix / Disney+" />
+          </div>
+          <div>
+            <label for="watch-companion">Teman Nonton</label>
+            <input type="text" id="watch-companion" placeholder="Solo / Nama teman" />
+          </div>
+        </div>
+        <div class="mb-16">
+          <label>Rating</label>
+          <div class="star-rating" id="star-rating">
+            <input type="radio" name="rating" id="star5" value="5" /><label for="star5">★</label>
+            <input type="radio" name="rating" id="star4" value="4" /><label for="star4">★</label>
+            <input type="radio" name="rating" id="star3" value="3" checked /><label for="star3">★</label>
+            <input type="radio" name="rating" id="star2" value="2" /><label for="star2">★</label>
+            <input type="radio" name="rating" id="star1" value="1" /><label for="star1">★</label>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addMovie()">
+          🎬 Add Movie
+        </button>
+      </div>
+
+      <div class="module-card accent-lav">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom: 0">
+            🍿 Watch List
+          </h2>
+          <span id="watch-count" class="badge" style="background: var(--lav-light); color: var(--text-mid)">0
+            films</span>
+        </div>
+        <div class="watch-grid" id="watch-grid">
+          <div class="empty-state">
+            <div class="empty-icon">🎥</div>
+            <p>
+              Belum ada film yang dicatat.<br />Yuk tambahkan film yang sudah
+              kamu tonton!
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ RECAP ═══════════ -->
+    <section class="page" id="page-recap">
+      <div class="page-header">
+        <h1 class="page-title">📊 Recap &amp; Analytics</h1>
+        <p class="page-sub">Refleksi diri dari data kamu 💌</p>
+      </div>
+
+      <div class="period-tabs">
+        <button class="period-tab active" data-period="week" onclick="switchPeriod(this)">
+          📅 Seminggu
+        </button>
+        <button class="period-tab" data-period="month" onclick="switchPeriod(this)">
+          🗓️ Sebulan
+        </button>
+        <button class="period-tab" data-period="year" onclick="switchPeriod(this)">
+          📆 Setahun
+        </button>
+      </div>
+
+      <div class="recap-grid mb-24" id="recap-grid">
+        <div class="recap-stat" style="--r-color: var(--mint)">
+          <div class="recap-stat-val" id="recap-tasks">0</div>
+          <div class="recap-stat-label">Tasks Completed</div>
+        </div>
+        <div class="recap-stat" style="--r-color: var(--mint)">
+          <div class="recap-stat-val" id="recap-tilawah">0 lbr</div>
+          <div class="recap-stat-label">Total Tilawah</div>
+        </div>
+        <div class="recap-stat" style="--r-color: var(--lavender)">
+          <div class="recap-stat-val" id="recap-movies">0</div>
+          <div class="recap-stat-label">Movies Watched</div>
+        </div>
+        <div class="recap-stat" style="--r-color: var(--sky)">
+          <div class="recap-stat-val" id="recap-study">0 mnt</div>
+          <div class="recap-stat-label">Study Time</div>
+        </div>
+        <div class="recap-stat" style="--r-color: var(--yellow)">
+          <div class="recap-stat-val" id="recap-habits">0%</div>
+          <div class="recap-stat-label">Habit Rate</div>
+        </div>
+        <div class="recap-stat" style="--r-color: var(--pink)">
+          <div class="recap-stat-val" id="recap-mood">—</div>
+          <div class="recap-stat-label">Dominant Mood</div>
+        </div>
+      </div>
+
+      <div class="recap-layout mb-24">
+        <div class="module-card accent-sky">
+          <h2 class="section-title">😊 Mood Wheel</h2>
+          <div class="mood-wheel" id="mood-wheel">
+            <div class="mood-wheel-center">
+              <span id="mood-wheel-count">0</span>
+              <small>entries</small>
+            </div>
+          </div>
+          <div class="mood-wheel-legend" id="mood-wheel-legend"></div>
+        </div>
+        <div class="module-card accent-peach">
+          <h2 class="section-title">📚 Tilawah Pixels</h2>
+          <div class="tilawah-grid" id="tilawah-pixel-grid"></div>
+          <div class="tilawah-legend">
+            <span class="pixel-legend item-empty">0</span>
+            <span class="pixel-legend item-blue">1</span>
+            <span class="pixel-legend item-green">2</span>
+            <span class="pixel-legend item-orange">3</span>
+            <span class="pixel-legend item-pink">4</span>
+            <span class="pixel-legend item-purple">5+</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="recap-layout mb-24">
+        <div class="module-card accent-lav">
+          <h2 class="section-title">✅ Habit Tracker</h2>
+          <div class="habit-grid-wrap">
+            <div id="habit-grid"></div>
+          </div>
+        </div>
+        <div class="module-card accent-pink">
+          <h2 class="section-title">📝 A Line a Day</h2>
+          <div class="aline-day-list" id="aline-day-list"></div>
+        </div>
+      </div>
+
+      <!-- ══ GRATITUDE TIMELINE ══ -->
+      <div class="module-card accent-sky mb-24">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom:0">🙏 Gratitude Timeline</h2>
+          <span class="badge" id="gratitude-count-badge" style="background:var(--sky-light);color:#3a7a8a">0
+            entri</span>
+        </div>
+        <p style="font-size:0.83rem;color:var(--text-light);margin-bottom:16px">Semua hal yang kamu syukuri dalam
+          periode ini ✨</p>
+        <div id="recap-gratitude-list" class="recap-gratitude-timeline"></div>
+      </div>
+
+      <!-- ══ BRAIN DUMP STICKY WALL ══ -->
+      <div class="module-card accent-yellow mb-24">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom:0">🧠 Brain Dump Wall</h2>
+          <span class="badge" id="braindump-count-badge" style="background:var(--yellow-light);color:#a08040">0
+            ide</span>
+        </div>
+        <p style="font-size:0.83rem;color:var(--text-light);margin-bottom:16px">Semua lintasan pikiran & ide spontan
+          kamu 💭</p>
+        <div id="recap-braindump-wall" class="recap-sticky-wall"></div>
+      </div>
+
+      <!-- ══ POSITIVE ACTS BADGE TICKER ══ -->
+      <div class="module-card accent-mint mb-24">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom:0">🌟 Positive Acts</h2>
+          <span class="badge" id="positive-count-badge" style="background:var(--mint-light);color:#3a8a6a">0 aksi</span>
+        </div>
+        <p style="font-size:0.83rem;color:var(--text-light);margin-bottom:16px">Kebaikan kecil yang punya impact besar
+          💚</p>
+        <div id="recap-positive-acts" class="recap-acts-ticker"></div>
+      </div>
+
+      <!-- ══ WISHLIST PROGRESS GALLERY ══ -->
+      <div class="module-card accent-peach mb-24">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom:0">🎁 Wishlist Progress</h2>
+          <span class="badge" id="wishlist-count-badge" style="background:var(--peach-light);color:#a06040">0
+            item</span>
+        </div>
+        <p style="font-size:0.83rem;color:var(--text-light);margin-bottom:16px">Goals & keinginan kamu — yang sudah dan
+          belum tercapai 🛍️</p>
+        <div id="recap-wishlist-gallery" class="recap-wishlist-gallery"></div>
+      </div>
+
+      <!-- ══ AFFIRMATIONS BIG QUOTE ══ -->
+      <div class="module-card accent-pink mb-24 recap-affirmation-card">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom:0">💬 Words of Affirmation</h2>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-sm" onclick="prevAffirmation()" id="aff-prev">‹</button>
+            <span id="aff-counter" style="font-size:0.82rem;color:var(--text-light);align-self:center">0/0</span>
+            <button class="btn btn-outline btn-sm" onclick="nextAffirmation()" id="aff-next">›</button>
+          </div>
+        </div>
+        <div id="recap-affirmation-display" class="recap-affirmation-display">
+          <div class="recap-aff-empty">Belum ada Words of Affirmation tercatat dalam periode ini 💌</div>
+        </div>
+      </div>
+
+      <!-- ══ TO-DO RECAP DONUT ══ -->
+      <div class="module-card accent-lav mb-24">
+        <div class="module-card-header">
+          <h2 class="section-title" style="margin-bottom:0">📋 Daily To-Do Recap</h2>
+          <span class="badge" id="todo-count-badge" style="background:var(--lav-light);color:#7b5ea7">0 hari</span>
+        </div>
+        <p style="font-size:0.83rem;color:var(--text-light);margin-bottom:16px">Rangkuman to-do list harianmu per
+          periode ini 📅</p>
+        <div id="recap-todo-summary" class="recap-todo-summary"></div>
+      </div>
+
+      <div class="module-card accent-pink">
+        <h2 class="section-title">💌 Refleksi &amp; Self-Appreciation</h2>
+        <label for="reflection-text">Tulis respon atau apresiasi untuk dirimu sendiri 🌸</label>
+        <textarea id="reflection-text" rows="4"
+          placeholder="Minggu ini aku keren banget dong — berhasil selesaiin semua task dan nggak skip tilawah sama sekali! 🌟"></textarea>
+        <div class="mt-12">
+          <button class="btn btn-primary btn-sm" onclick="saveReflection()">
+            💾 Save Reflection
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <!-- /app-main -->
+
+  <!-- ── TOAST ── -->
+  <div id="toast-container"></div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

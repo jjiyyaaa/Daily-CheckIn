@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Check-in ✨ — Your Cozy Personal Journal</title>
+  <meta name="description"
+    content="Aplikasi journaling personal yang cheerful dan colorful. Catat gratitude, mood, produktivitas, dan well-being kamu setiap hari." />
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,600&display=swap"
+    rel="stylesheet" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="landing.css" />
+
+  <style>
+    /* ── Bootstrap overrides & extensions ── */
+    body {
+      font-family: 'Outfit', sans-serif !important;
+    }
+
+    /* React Quote Widget */
+    #react-quote-root {
+      background: linear-gradient(135deg, var(--pink-light), var(--lav-light));
+      border-radius: var(--radius-md);
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      min-height: 90px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #react-quote-root::before {
+      content: '"';
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      font-size: 6rem;
+      color: rgba(255, 133, 161, 0.18);
+      font-family: serif;
+      line-height: 1;
+    }
+
+    .rq-text {
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--text-dark);
+      line-height: 1.7;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .rq-author {
+      font-size: 0.82rem;
+      color: var(--pink-deep);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .rq-loader {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    .rq-spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--pink-light);
+      border-top-color: var(--pink-deep);
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .rq-btn {
+      background: none;
+      border: none;
+      color: var(--pink-deep);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .rq-btn:hover {
+      background: rgba(255, 133, 161, 0.12);
+    }
+
+    /* Category tags on feature cards */
+    .feature-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--pink-deep);
+      margin-bottom: 10px;
+    }
+
+    /* Stats counter animation */
+    .stat-counter {
+      transition: all 0.5s ease;
+    }
+
+    /* Floating badge */
+    .float-badge {
+      position: absolute;
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 16px;
+      box-shadow: var(--shadow-md);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      white-space: nowrap;
+      animation: floatBadge 3s ease-in-out infinite;
+    }
+
+    .float-badge-1 {
+      top: 10%;
+      right: -20px;
+      animation-delay: 0.5s;
+    }
+
+    .float-badge-2 {
+      bottom: 15%;
+      left: -30px;
+      animation-delay: 0s;
+    }
+
+    @keyframes floatBadge {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    /* Bootstrap nav customization */
+    .navbar-brand {
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--text-dark) !important;
+    }
+
+    .nav-link {
+      font-weight: 500;
+      color: var(--text-mid) !important;
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover {
+      color: var(--pink-deep) !important;
+    }
+
+    .navbar-toggler {
+      border-color: var(--pink) !important;
+    }
+
+    .navbar-toggler:focus {
+      box-shadow: 0 0 0 3px rgba(255, 179, 198, 0.3) !important;
+    }
+
+    .navbar-collapse.show,
+    .navbar-collapse.collapsing {
+      background: rgba(255, 253, 249, 0.98);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 12px 16px;
+      margin-top: 8px;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Enhanced module badge */
+    .module-badge-bs {
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    /* Weather/Tip card from API */
+    #api-tip-card {
+      background: linear-gradient(135deg, var(--mint-light), var(--sky-light));
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      margin-top: 16px;
+    }
+
+    .tip-text {
+      font-size: 0.9rem;
+      color: var(--text-mid);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 720px) {
+      /* Reposition badges so they stay within the mockup on mobile */
+      .float-badge-1 {
+        right: 8px;
+        top: 8px;
+      }
+
+      .float-badge-2 {
+        left: 8px;
+        bottom: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body class="landing-body">
+
+  <!-- ── BOOTSTRAP NAVBAR ── -->
+  <nav class="navbar navbar-expand-lg lp-nav" id="lp-nav" style="padding: 14px 24px;">
+    <div class="container-fluid" style="max-width:1100px;margin:0 auto;">
+      <a class="navbar-brand" href="#">
+        <span style="font-size:1.4rem;margin-right:6px;">🌸</span>Daily Check-in
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+        aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation"
+        style="border-color:var(--pink)">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-3">
+          <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+          <li class="nav-item"><a class="nav-link" href="#how-it-works">How It Works</a></li>
+          <li class="nav-item"><a class="nav-link" href="#modules">Modules</a></li>
+          <li class="nav-item ms-lg-2">
+            <a href="login.html" class="btn btn-primary btn-sm">Open App ✨</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="lp-hero" id="hero">
+    <div class="hero-blobs">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+    </div>
+    <div class="hero-content animate-fade">
+      <div class="hero-badge">🌷 Your cozy personal space</div>
+      <h1 class="hero-title serif">
+        Every day deserves<br />
+        <em>a little check-in</em> 💕
+      </h1>
+      <p class="hero-subtitle">
+        Catat gratitude, lacak mood, kelola tugas, dan rayakan setiap hari —
+        semua dalam satu ruang yang estetik, colorful, dan menenangkan ✨
+      </p>
+
+      <!-- React Quote Widget (fetches live quotes) -->
+      <div id="react-quote-root"></div>
+
+      <div class="hero-cta">
+        <a href="login.html" class="btn btn-primary">Mulai Hari Ini 🌸</a>
+        <a href="#features" class="btn btn-outline">Lihat Fitur →</a>
+      </div>
+      <div class="hero-stats mt-3">
+        <div class="stat-item">
+          <span class="stat-num stat-counter" data-target="6">6</span>
+          <span class="stat-label">Modules</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">100%</span>
+          <span class="stat-label">Offline Ready</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">∞</span>
+          <span class="stat-label">Good Vibes</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual animate-float" style="position:relative;margin-left:5rem;">
+      <div class="float-badge float-badge-1">✅ 5 tasks done today!</div>
+      <div class="float-badge float-badge-2">🌿 Tilawah streak: 7 days</div>
+      <div class="app-mockup">
+        <div class="mockup-header">
+          <span class="mockup-dot" style="background:var(--coral)"></span>
+          <span class="mockup-dot" style="background:var(--yellow)"></span>
+          <span class="mockup-dot" style="background:var(--mint)"></span>
+          <span style="font-size:0.75rem;color:var(--text-light);margin-left:auto">Daily Check-in</span>
+        </div>
+        <div class="mockup-body">
+          <div class="mockup-greeting">Good morning, bestie! ☀️</div>
+          <div class="mockup-quote" id="mockup-quote-text">"Small steps every day lead to big changes."</div>
+          <div class="mockup-modules">
+            <div class="mockup-mod" style="background:var(--pink-light)">📔 Journal</div>
+            <div class="mockup-mod" style="background:var(--yellow-light)">✅ Tasks</div>
+            <div class="mockup-mod" style="background:var(--mint-light)">🕌 Spiritual</div>
+            <div class="mockup-mod" style="background:var(--lav-light)">🎬 Watch</div>
+          </div>
+          <div class="mockup-mood-row">
+            <span>Today's mood:</span>
+            <span class="mockup-moods">😊 😌 🥰 😤 😴</span>
+          </div>
+          <div class="mockup-task-list">
+            <div class="mockup-task done">✓ Gratitude check-in</div>
+            <div class="mockup-task">○ Study Log</div>
+            <div class="mockup-task">○ Tilawah 5 lembar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURES — Bootstrap Grid ── -->
+  <section class="lp-section" id="features">
+    <div class="lp-container">
+      <div class="section-label">✨ Why Daily Check-in?</div>
+      <h2 class="section-heading serif">Built for your <em>everyday well-being</em></h2>
+      <p class="section-sub">Satu tempat untuk segalanya — dari jurnal pagi sampai recap mingguan kamu.</p>
+
+      <div class="row g-4">
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="feature-card h-100" style="--card-color:var(--pink-light)">
+            <div class="feature-tag">Design</div>
+            <div class="feature-icon">🌸</div>
+            <h3>Colorful & Aesthetic</h3>
+            <p>Desain coquette pastel yang bikin kamu semangat buka aplikasinya setiap hari.</p>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="feature-card h-100" style="--card-color:var(--yellow-light)">
+            <div class="feature-tag">Tracker</div>
+            <div class="feature-icon">⚡</div>
+            <h3>All-in-One Tracker</h3>
+            <p>Journal, Task, Habit, Spiritual, Entertainment — semua ada di satu tempat.</p>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="feature-card h-100" style="--card-color:var(--mint-light)">
+            <div class="feature-tag">Privacy</div>
+            <div class="feature-icon">💾</div>
+            <h3>Private & Offline</h3>
+            <p>Data tersimpan di browser-mu sendiri. Aman, privat, dan bisa diakses tanpa internet.</p>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="feature-card h-100" style="--card-color:var(--lav-light)">
+            <div class="feature-tag">Analytics</div>
+            <div class="feature-icon">📊</div>
+            <h3>Smart Recap</h3>
+            <p>Lihat ringkasan mingguan, bulanan, atau tahunan untuk refleksi diri yang bermakna.</p>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="feature-card h-100" style="--card-color:var(--sky-light)">
+            <div class="feature-tag">API Live</div>
+            <div class="feature-icon">💬</div>
+            <h3>Daily Inspiration</h3>
+            <p>Quote motivasi harian dari API eksternal untuk memulai hari dengan semangat.</p>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="feature-card h-100" style="--card-color:var(--peach-light)">
+            <div class="feature-tag">Mobile</div>
+            <div class="feature-icon">📱</div>
+            <h3>Mobile Friendly</h3>
+            <p>Responsif di semua ukuran layar — dari HP sampai desktop, tetap cantik dan nyaman.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── LIVE API SECTION ── -->
+  <section class="lp-section" style="padding-top:0;padding-bottom:80px;" id="live-api">
+    <div class="lp-container">
+      <div class="section-label">🌐 Live from the Internet</div>
+      <h2 class="section-heading serif">Real-time <em>inspiration & data</em></h2>
+      <p class="section-sub">Daily Check-in terhubung ke API eksternal untuk pengalaman yang lebih hidup.</p>
+
+      <div class="row g-4">
+        <!-- Live Quote Card (Fetch API) -->
+        <div class="col-12 col-md-6">
+          <div class="card h-100" style="border-radius:var(--radius-md);border:none;box-shadow:var(--shadow-sm);">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-2 mb-3">
+                <span style="font-size:1.4rem;">💬</span>
+                <span style="font-weight:700;color:var(--text-dark)">Quote of the Moment</span>
+                <span class="badge ms-auto" style="background:var(--mint-light);color:#3A8A6A;font-size:0.72rem;">LIVE
+                  API</span>
+              </div>
+              <div id="landing-quote-card" style="min-height:80px;">
+                <div class="rq-loader">
+                  <div class="rq-spinner"></div> Fetching quote…
+                </div>
+              </div>
+              <button onclick="fetchLandingQuote()" class="btn btn-sm btn-outline mt-3" style="font-size:0.8rem;">
+                🔄 New Quote
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Random Activity Card (Boredapi / backup) -->
+        <div class="col-12 col-md-6">
+          <div class="card h-100" style="border-radius:var(--radius-md);border:none;box-shadow:var(--shadow-sm);">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-2 mb-3">
+                <span style="font-size:1.4rem;">🎯</span>
+                <span style="font-weight:700;color:var(--text-dark)">Daily Activity Idea</span>
+                <span class="badge ms-auto" style="background:var(--lav-light);color:#7B5EA7;font-size:0.72rem;">LIVE
+                  API</span>
+              </div>
+              <div id="activity-card" style="min-height:80px;">
+                <div class="rq-loader">
+                  <div class="rq-spinner"></div> Finding activity…
+                </div>
+              </div>
+              <button onclick="fetchActivity()" class="btn btn-sm btn-outline mt-3" style="font-size:0.8rem;">
+                🎲 New Idea
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MODULES — Bootstrap List Group ── -->
+  <section class="lp-section lp-section-alt" id="modules">
+    <div class="lp-container">
+      <div class="section-label">🗂️ Explore Modules</div>
+      <h2 class="section-heading serif">Everything you need, <em>all in one place</em></h2>
+      <div class="modules-list" style="margin-top:2rem;">
+        <div class="module-item">
+          <div class="module-icon-wrap" style="background:var(--pink-light)">🏠</div>
+          <div class="module-info">
+            <h4>Dashboard</h4>
+            <p>Ringkasan hari ini, quote inspiratif, dan status semua modul dalam satu pandangan.</p>
+          </div>
+          <span class="badge module-badge-bs" style="background:var(--pink-light);color:var(--pink-deep)">Home</span>
+        </div>
+        <div class="module-item">
+          <div class="module-icon-wrap" style="background:var(--sky-light)">📔</div>
+          <div class="module-info">
+            <h4>Journaling</h4>
+            <p>Gratitude, Mood Tracker, Brain Dump, dan A Line a Day untuk refleksi harian.</p>
+          </div>
+          <span class="badge module-badge-bs" style="background:var(--sky-light);color:#5B9FAA">Journal</span>
+        </div>
+        <div class="module-item">
+          <div class="module-icon-wrap" style="background:var(--yellow-light)">✅</div>
+          <div class="module-info">
+            <h4>Productivity & Habits</h4>
+            <p>Task Tracker, Study Log (weekdays only), dan Habit Tracker harian.</p>
+          </div>
+          <span class="badge module-badge-bs" style="background:var(--yellow-light);color:#A08040">Produk</span>
+        </div>
+        <div class="module-item">
+          <div class="module-icon-wrap" style="background:var(--mint-light)">🕌</div>
+          <div class="module-info">
+            <h4>Spiritual</h4>
+            <p>Tilawah tracker dengan visual indicator warna — hijau jika target tercapai.</p>
+          </div>
+          <span class="badge module-badge-bs" style="background:var(--mint-light);color:#3A8A6A">Spirit</span>
+        </div>
+        <div class="module-item">
+          <div class="module-icon-wrap" style="background:var(--lav-light)">🎬</div>
+          <div class="module-info">
+            <h4>Entertainment</h4>
+            <p>Watch List untuk mencatat film yang udah ditonton + rating dan teman nonton.</p>
+          </div>
+          <span class="badge module-badge-bs" style="background:var(--lav-light);color:#7B5EA7">Watch</span>
+        </div>
+        <div class="module-item">
+          <div class="module-icon-wrap" style="background:var(--peach-light)">📈</div>
+          <div class="module-info">
+            <h4>Analytics & Recap</h4>
+            <p>Rekap periodik (minggu/bulan/tahun) dan area refleksi personal untuk self-appreciation.</p>
+          </div>
+          <span class="badge module-badge-bs" style="background:var(--peach-light);color:#A06040">Recap</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ── -->
+  <section class="lp-section" id="how-it-works">
+    <div class="lp-container">
+      <div class="section-label">🗺️ How It Works</div>
+      <h2 class="section-heading serif">Simple as your <em>morning routine</em></h2>
+      <div class="steps-grid" style="margin-top:2rem;">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-icon">🌅</div>
+          <h3>Mulai Harimu</h3>
+          <p>Buka Dashboard untuk dapat quote harian dan lihat ringkasan hari ini.</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-icon">✍️</div>
+          <h3>Check-in Harian</h3>
+          <p>Isi journaling, catat mood, dan set task yang mau diselesaikan hari ini.</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-icon">🌙</div>
+          <h3>Reflect & Recap</h3>
+          <p>Di malam hari, lihat rekap dan tulis apresiasi untuk dirimu sendiri.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FAQ Accordion (Bootstrap) ── -->
+  <section class="lp-section lp-section-alt" id="faq">
+    <div class="lp-container">
+      <div class="section-label">❓ FAQ</div>
+      <h2 class="section-heading serif">Pertanyaan yang <em>sering ditanya</em></h2>
+      <div style="max-width:700px;margin:0 auto;">
+        <div class="accordion" id="faqAccordion"
+          style="border-radius:var(--radius-md);overflow:hidden;box-shadow:var(--shadow-sm);margin-top:2rem;">
+          <div class="accordion-item" style="border:none;border-bottom:1px solid var(--gray-200);">
+            <h2 class="accordion-header">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1"
+                style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--text-dark);">
+                Apakah data saya aman?
+              </button>
+            </h2>
+            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+              <div class="accordion-body" style="color:var(--text-mid);font-size:0.9rem;">
+                Iya! Semua data tersimpan 100% di browser lokal kamu (localStorage). Tidak ada server, tidak ada cloud,
+                tidak ada yang bisa membaca data kamu selain kamu sendiri. 🔒
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item" style="border:none;border-bottom:1px solid var(--gray-200);">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2"
+                style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--text-dark);">
+                Bisa digunakan offline?
+              </button>
+            </h2>
+            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+              <div class="accordion-body" style="color:var(--text-mid);font-size:0.9rem;">
+                Hampir semua fitur bisa digunakan offline! Hanya fitur Daily Quote yang memerlukan koneksi internet
+                untuk fetch dari API eksternal. Sisanya 100% offline ready. ✈️
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item" style="border:none;border-bottom:1px solid var(--gray-200);">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3"
+                style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--text-dark);">
+                Bisa dipakai di HP?
+              </button>
+            </h2>
+            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+              <div class="accordion-body" style="color:var(--text-mid);font-size:0.9rem;">
+                Tentu saja! Daily Check-in fully responsive dan didesain untuk mobile-first experience. Buka di browser
+                HP kamu dan langsung bisa dipakai. 📱
+              </div>
+            </div>
+          </div>
+          <div class="accordion-item" style="border:none;">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4"
+                style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--text-dark);">
+                Gratis selamanya?
+              </button>
+            </h2>
+            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+              <div class="accordion-body" style="color:var(--text-mid);font-size:0.9rem;">
+                Ya, gratis selamanya! Daily Check-in adalah aplikasi personal yang dibuat dengan ❤️ untuk well-being
+                kamu. Tidak ada biaya tersembunyi, tidak ada subscription. 💕
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA FINAL ── -->
+  <section class="lp-cta">
+    <div class="lp-container text-center">
+      <div class="cta-emoji">🌸✨💕</div>
+      <h2 class="serif" style="font-size:2.2rem;margin-bottom:16px;color:var(--text-dark)">
+        Ready to start your<br /><em>daily check-in?</em>
+      </h2>
+      <p style="color:var(--text-mid);margin-bottom:32px;font-size:1.05rem">
+        Gratis, privat, dan selalu ada buat kamu 💗
+      </p>
+      <a href="login.html" class="btn btn-primary" style="font-size:1.05rem;padding:16px 40px;">
+        Open Daily Check-in 🌷
+      </a>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="lp-footer">
+    <div class="lp-container flex-between" style="flex-wrap:wrap;gap:12px;">
+      <div class="lp-logo">
+        <span class="logo-icon">🌸</span>
+        <span>Daily Check-in</span>
+      </div>
+      <p style="color:var(--text-light);font-size:0.85rem;">Made with 💕 for your well-being</p>
+    </div>
+  </footer>
+
+  <!-- Toast container -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- React 18 + ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel for JSX in browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- ── React Quote Widget ── -->
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+
+    const FALLBACK_QUOTES = [
+      { content: "Small steps every day lead to big changes.", author: "Daily Check-in" },
+      { content: "You are doing better than you think. Keep going!", author: "Daily Check-in" },
+      { content: "Celebrate tiny wins — they add up to something great.", author: "Daily Check-in" },
+      { content: "Be gentle with yourself. Growth takes time.", author: "Daily Check-in" },
+      { content: "Every morning is a fresh start. Make it count.", author: "Daily Check-in" },
+    ];
+
+    function QuoteWidget() {
+      const [quote, setQuote] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(false);
+
+      const fetchQuote = useCallback(async () => {
+        setLoading(true);
+        setError(false);
+        try {
+          const res = await fetch(
+            "https://api.quotable.io/random?tags=inspirational|happiness|success&maxLength=120",
+            { signal: AbortSignal.timeout(5000) }
+          );
+          if (!res.ok) throw new Error("API error");
+          const data = await res.json();
+          setQuote({ content: data.content, author: data.author });
+          // Also update mockup in hero
+          const mockup = document.getElementById("mockup-quote-text");
+          if (mockup) mockup.textContent = `"${data.content}"`;
+        } catch {
+          const fb = FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)];
+          setQuote(fb);
+          setError(true);
+        } finally {
+          setLoading(false);
+        }
+      }, []);
+
+      useEffect(() => { fetchQuote(); }, [fetchQuote]);
+
+      if (loading) return (
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "var(--text-light)", fontSize: "0.9rem" }}>
+          <div className="rq-spinner"></div> Fetching quote…
+        </div>
+      );
+
+      return (
+        <div>
+          <p className="rq-text">"{quote?.content}"</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span className="rq-author">— {quote?.author}</span>
+            <button className="rq-btn" onClick={fetchQuote} title="New quote">🔄</button>
+          </div>
+          {error && (
+            <small style={{ display: "block", marginTop: "6px", color: "var(--text-light)", fontSize: "0.72rem" }}>
+              ✈️ Offline mode — showing local quotes
+            </small>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("react-quote-root"));
+    root.render(React.createElement(QuoteWidget));
+  </script>
+
+  <!-- ── Vanilla JS for landing-page features ── -->
+  <script>
+    // ── Navbar scroll effect ──
+    window.addEventListener('scroll', () => {
+      document.getElementById('lp-nav').classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // ── Intersection Observer for animations ──
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('animate-fade'), i * 80);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.feature-card, .module-item, .step-card').forEach(el => observer.observe(el));
+
+    // ── Fetch Quote for landing API card ──
+    const LANDING_FALLBACK_QUOTES = [
+      { content: "Small steps every day lead to big changes.", author: "Daily Check-in" },
+      { content: "You are doing better than you think. Keep going!", author: "Daily Check-in" },
+      { content: "Be gentle with yourself. Growth takes time.", author: "Daily Check-in" },
+    ];
+
+    async function fetchLandingQuote() {
+      const card = document.getElementById('landing-quote-card');
+      card.innerHTML = `<div class="rq-loader"><div class="rq-spinner"></div> Fetching…</div>`;
+      try {
+        const res = await fetch(
+          "https://api.quotable.io/random?tags=inspirational|success&maxLength=100",
+          { signal: AbortSignal.timeout(5000) }
+        );
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
+        card.innerHTML = `
+          <p style="font-style:italic;color:var(--text-dark);font-size:0.95rem;margin-bottom:6px;">"${data.content}"</p>
+          <span style="font-size:0.8rem;color:var(--pink-deep);font-weight:700;">— ${data.author}</span>
+        `;
+      } catch {
+        const fb = LANDING_FALLBACK_QUOTES[Math.floor(Math.random() * LANDING_FALLBACK_QUOTES.length)];
+        card.innerHTML = `
+          <p style="font-style:italic;color:var(--text-dark);font-size:0.95rem;margin-bottom:6px;">"${fb.content}"</p>
+          <span style="font-size:0.8rem;color:var(--pink-deep);font-weight:700;">— ${fb.author}</span>
+          <br/><small style="color:var(--text-light);font-size:0.72rem;">✈️ Offline mode</small>
+        `;
+      }
+    }
+
+    // ── Fetch Random Activity (Bored API) ──
+    const ACTIVITY_FALLBACK = [
+      { activity: "Write in your journal about 3 things you're grateful for", type: "relaxation" },
+      { activity: "Take a 10-minute mindful walk outside", type: "wellbeing" },
+      { activity: "Reach out to someone you haven't talked to in a while", type: "social" },
+      { activity: "Read a chapter of a book you've been meaning to finish", type: "education" },
+      { activity: "Sketch or doodle something from your imagination", type: "creative" },
+    ];
+
+    async function fetchActivity() {
+      const card = document.getElementById('activity-card');
+      card.innerHTML = `<div class="rq-loader"><div class="rq-spinner"></div> Finding idea…</div>`;
+      try {
+        const res = await fetch(
+          "https://bored-api.appbrewery.com/random",
+          { signal: AbortSignal.timeout(5000) }
+        );
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
+        const typeColors = {
+          education: 'var(--sky-light)', relaxation: 'var(--mint-light)',
+          social: 'var(--pink-light)', music: 'var(--lav-light)',
+          recreational: 'var(--yellow-light)', cooking: 'var(--peach-light)',
+        };
+        const bg = typeColors[data.type] || 'var(--gray-100)';
+        card.innerHTML = `
+          <p style="color:var(--text-dark);font-size:0.95rem;margin-bottom:8px;">${data.activity}</p>
+          <span style="padding:3px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;background:${bg};color:var(--text-mid);">${data.type}</span>
+        `;
+      } catch {
+        const fb = ACTIVITY_FALLBACK[Math.floor(Math.random() * ACTIVITY_FALLBACK.length)];
+        card.innerHTML = `
+          <p style="color:var(--text-dark);font-size:0.95rem;margin-bottom:8px;">${fb.activity}</p>
+          <span style="padding:3px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;background:var(--mint-light);color:#3A8A6A;">${fb.type}</span>
+          <br/><small style="color:var(--text-light);font-size:0.72rem;">✈️ Offline mode</small>
+        `;
+      }
+    }
+
+    // Auto-fetch on load
+    fetchLandingQuote();
+    fetchActivity();
+  </script>
+</body>
+
+</html>
