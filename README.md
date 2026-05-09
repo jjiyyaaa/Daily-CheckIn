@@ -33,15 +33,6 @@ Since this application is built entirely with Vanilla JS, HTML, and CSS without 
 3. Simply open the `index.html` file in your favorite web browser (Chrome, Safari, Firefox, etc.).
    *Alternatively*, you can use extensions like **Live Server** in VS Code for a better development experience.
 
-## 🎨 Screenshots
-
-*(Feel free to add your application screenshots inside the `assets/` folder and link them here)*
-
-- **Landing Page**: A sweet and aesthetic hero design.
-- **Login / Register Form**: Simple authentication with local validation.
-- **Main Dashboard**: Easy access to all your daily check-in modules.
-- **Recaps**: Beautifully crafted daily, weekly, and yearly summaries.
-
 ## 🛠️ Tech Stack
 
 - **Frontend**: HTML5, Vanilla CSS (Custom Design System), Vanilla JavaScript (ES6+).
