@@ -8,22 +8,7 @@
   <meta name="description"
     content="Aplikasi journaling personal harian — journal, tugas, spiritual, dan entertainment tracker." />
   <script>
-    // Auth Guard — runs before page renders
-    (function () {
-      const s =
-        sessionStorage.getItem("dc_session") ||
-        localStorage.getItem("dc_session");
-      if (!s) {
-        window.location.replace("login.html");
-        return;
-      }
-      try {
-        const p = JSON.parse(s);
-        if (!p || !p.username) window.location.replace("login.html");
-      } catch {
-        window.location.replace("login.html");
-      }
-    })();
+    // Firebase auth guard will be handled in app.js
   </script>
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -785,6 +770,9 @@
         </div>
         <div class="module-card accent-peach">
           <h2 class="section-title">📚 Tilawah Pixels</h2>
+          <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:14px; margin-bottom:-8px; text-align:center; font-size:0.75rem; font-weight:600; color:var(--text-light);">
+            <div>Sen</div><div>Sel</div><div>Rab</div><div>Kam</div><div>Jum</div><div>Sab</div><div>Min</div>
+          </div>
           <div class="tilawah-grid" id="tilawah-pixel-grid"></div>
           <div class="tilawah-legend">
             <span class="pixel-legend item-empty">0</span>
@@ -903,6 +891,16 @@
 
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <!-- Firebase Auth -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase Setup -->
+  <script src="firebase-setup.js"></script>
+
   <script src="app.js"></script>
 </body>
 

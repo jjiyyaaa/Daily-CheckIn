@@ -3,6 +3,42 @@
    All interactivity, LocalStorage, Fetch API
    ============================================= */
 
+// ── AUTH GUARD & FIRESTORE SYNC ──
+let currentUser = null;
+let cloudData = {}; // in-memory store
+
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    window.location.replace("login.html");
+    return;
+  }
+  currentUser = user;
+  
+  // Update sidebar info
+  const snapshot = await db.collection('users').doc(user.uid).get();
+  if (snapshot.exists) {
+    const data = snapshot.data();
+    document.getElementById("sidebar-user-name").textContent = data.name;
+    document.getElementById("greeting-text").textContent = `Good morning, ${data.name.split(' ')[0]}! ☀️`;
+  } else {
+    document.getElementById("sidebar-user-name").textContent = user.email;
+  }
+
+  // Download all user data collections into memory
+  try {
+    const dataSnapshot = await db.collection('users').doc(user.uid).collection('data').get();
+    dataSnapshot.forEach(doc => {
+      cloudData[doc.id] = doc.data().value;
+    });
+  } catch(e) {
+    console.error("Failed to load cloud data", e);
+  }
+
+  // Boot the app data
+  refreshDashboard();
+  initApp();
+});
+
 // ── TODAY'S KEY (local timezone, bukan UTC) ──
 function localDateKey(date) {
   const d = date || new Date();
@@ -16,14 +52,55 @@ const todayKey = () => localDateKey(new Date());
 // ── LOAD / SAVE DATA ──
 function loadData(key, fallback = {}) {
   try {
+    if (cloudData[key] !== undefined) return cloudData[key];
     return JSON.parse(localStorage.getItem(key)) || fallback;
   } catch {
     return fallback;
   }
 }
+
+let saveQueue = {};
+let saveTimeout = null;
 function saveData(key, val) {
+  cloudData[key] = val;
   localStorage.setItem(key, JSON.stringify(val));
+
+  if (currentUser) {
+    saveQueue[key] = val;
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
+      const keysToSave = { ...saveQueue };
+      saveQueue = {};
+      const batch = db.batch();
+      for (let k in keysToSave) {
+        const docRef = db.collection('users').doc(currentUser.uid).collection('data').doc(k);
+        batch.set(docRef, { value: keysToSave[k] });
+      }
+      try {
+        await batch.commit();
+      } catch (e) {
+        console.error("Cloud sync failed", e);
+      }
+    }, 1000);
+  }
 }
+
+// ── INIT APP ──
+function initApp() {
+  initDate();
+  fetchQuote();
+  fetchDailyTip();
+}
+
+// ── LOGOUT ──
+window.handleLogout = function() {
+  if (!confirm("Yakin mau logout? 🚪")) return;
+  auth.signOut().then(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.replace("login.html");
+  }).catch(err => console.error("Logout error", err));
+};
 
 // ── NAVIGATION ──
 const navItems = document.querySelectorAll(".nav-item[data-page]");
@@ -960,13 +1037,23 @@ function switchPeriod(btn) {
 
 function getDateRange(period) {
   const now = new Date();
-  const end = new Date(now);
-  end.setHours(23, 59, 59);
   const start = new Date(now);
-  if (period === "week") start.setDate(now.getDate() - 6);
-  if (period === "month") start.setDate(now.getDate() - 29);
-  if (period === "year") start.setFullYear(now.getFullYear() - 1);
-  start.setHours(0, 0, 0);
+  const end = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+
+  if (period === "week") {
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    start.setDate(diff);
+    end.setDate(start.getDate() + 6);
+  } else if (period === "month") {
+    start.setDate(1);
+    end.setMonth(end.getMonth() + 1, 0); // last day of current month
+  } else if (period === "year") {
+    start.setMonth(0, 1); // Jan 1
+    end.setMonth(11, 31); // Dec 31
+  }
   return { start, end };
 }
 
@@ -985,16 +1072,13 @@ function renderRecap() {
   // Tasks
   let totalTasks = 0,
     doneTasks = 0;
-  Object.keys(localStorage)
-    .filter((k) => k.startsWith("dc_tasks_"))
-    .forEach((k) => {
-      const date = k.replace("dc_tasks_", "");
-      if (inRange(date, range)) {
-        const tasks = loadData(k, []);
-        totalTasks += tasks.length;
-        doneTasks += tasks.filter((t) => t.completed).length;
-      }
-    });
+  const allTasks = loadData("dc_tasks", []);
+  allTasks.forEach((t) => {
+    if (inRange(t.createdDate, range) || (t.completed && inRange(t.completedDate, range))) {
+      totalTasks++;
+      if (t.completed) doneTasks++;
+    }
+  });
 
   // Tilawah
   const tilawahInRange = tilawah.filter((l) => inRange(l.date, range));
@@ -1075,7 +1159,15 @@ function renderRecap() {
     todayRangeDates.push(new Date(cloneDate));
     cloneDate.setDate(cloneDate.getDate() + 1);
   }
-  const recentDates = todayRangeDates.slice(-31);
+  const recentDates = todayRangeDates;
+
+  let emptyCells = 0;
+  if (recapPeriod === "month" || recapPeriod === "year") {
+    const firstDay = new Date(range.start).getDay(); // 0 is Sunday, 1 is Monday
+    emptyCells = (firstDay + 6) % 7; // Monday is 0, Sunday is 6
+  }
+  const emptyHtml = Array(emptyCells).fill('<div class="pixel-cell empty" style="border:none;background:transparent;"></div>').join("");
+  const emptyTdHtml = Array(emptyCells).fill('<th style="border:none;background:transparent;"></th>').join("");
 
   // Render mood wheel
   const colors = {
@@ -1134,15 +1226,19 @@ function renderRecap() {
   // Render tilawah pixel grid
   const pixelGrid = document.getElementById("tilawah-pixel-grid");
   if (pixelGrid) {
-    pixelGrid.innerHTML = recentDates
+    const daysHtml = recentDates
       .map((d) => {
         const key = localDateKey(d);
         const entry = tilawah.find((l) => l.date === key) || { pages: 0 };
         const level = Math.min(entry.pages, 5);
         const label = entry.pages ? `${entry.pages} lbr` : "0";
-        return `<div class="pixel-cell tilawah-${level}" title="${key} — ${label}">${entry.pages ? label : ""}</div>`;
+        return `<div class="pixel-cell tilawah-${level}" title="${key} — ${label}">
+                  <div style="font-size: 0.65rem; margin-bottom: 2px; font-weight: normal; line-height: 1;">${d.getDate()}</div>
+                  <div style="font-weight: 700; font-size: 0.75rem;">${entry.pages ? entry.pages : ""}</div>
+                </div>`;
       })
       .join("");
+    pixelGrid.innerHTML = emptyHtml + daysHtml;
   }
 
   // Render habit grid
@@ -1163,12 +1259,23 @@ function renderRecap() {
               return `<td class="habit-cell ${active ? "active" : ""}" title="${date}${active ? " ✓" : ""}"></td>`;
             })
             .join("");
-          return `<tr><td>${escHtml(def.name)}</td>${cells}</tr>`;
+          const emptyTds = Array(emptyCells).fill('<td style="border:none;background:transparent;"></td>').join("");
+          return `
+            <tr>
+              <td class="habit-label-cell" style="position:sticky;left:0;background:#fff;z-index:2;font-weight:600;min-width:120px;border-bottom:1px solid #f0f0f0;">${escHtml(def.name)}</td>
+              ${emptyTds}${cells}
+            </tr>
+          `;
         })
         .join("");
       habitGrid.innerHTML = `
-        <table class="habit-table">
-          <thead><tr><th>Habit</th>${headerCells}</tr></thead>
+        <table class="habit-table" style="border-collapse:separate;border-spacing:4px;">
+          <thead>
+            <tr>
+              <th style="position:sticky;left:0;background:#fff;z-index:2;min-width:120px;">Habit</th>
+              ${emptyTdHtml}${headerCells}
+            </tr>
+          </thead>
           <tbody>${rows}</tbody>
         </table>
       `;

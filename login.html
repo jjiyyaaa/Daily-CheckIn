@@ -412,7 +412,7 @@
     <form id="form-login" novalidate onsubmit="handleLogin(event)">
       <div class="auth-input-group">
         <span class="input-prefix">👤</span>
-        <input class="auth-input" type="text" id="login-username" placeholder="Username" autocomplete="username" />
+        <input class="auth-input" type="text" id="login-username" placeholder="Username / Email" autocomplete="username" />
         <div class="field-feedback" id="fb-login-user"></div>
       </div>
       <div class="auth-input-group">
@@ -440,6 +440,11 @@
         <span class="input-prefix">🌸</span>
         <input class="auth-input" type="text" id="reg-name" placeholder="Nama Lengkap" />
         <div class="field-feedback" id="fb-reg-name"></div>
+      </div>
+      <div class="auth-input-group">
+        <span class="input-prefix">📧</span>
+        <input class="auth-input" type="email" id="reg-email" placeholder="Email" autocomplete="email" />
+        <div class="field-feedback" id="fb-reg-email"></div>
       </div>
       <div class="auth-input-group">
         <span class="input-prefix">👤</span>
@@ -475,25 +480,30 @@
     </form>
 
     <div class="auth-note">
-      🔒 Data kamu disimpan <strong>aman & privat</strong> di browser ini.<br />
-      Tidak ada server — 100% offline ready.
+      🔒 Data kamu disimpan <strong>aman & privat</strong> di cloud.<br />
+      Tersinkronisasi otomatis antar perangkat.
     </div>
   </div>
 
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <!-- Firebase Auth -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase Setup -->
+  <script src="firebase-setup.js"></script>
+
   <script>
     // ── Check if already logged in ──
-    (function () {
-      const session = sessionStorage.getItem('dc_session') || localStorage.getItem('dc_session');
-      if (session) {
-        try {
-          const s = JSON.parse(session);
-          if (s && s.username) window.location.replace('app.html');
-        } catch { }
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        window.location.replace('app.html');
       }
-    })();
+    });
 
     // ── Tab switching ──
     function switchTab(tab) {
@@ -609,66 +619,95 @@
     }
 
     // ── REGISTER ──
-    function handleRegister(e) {
+    async function handleRegister(e) {
       e.preventDefault();
       hideAlerts(); clearValidation();
       const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim().toLowerCase();
       const username = document.getElementById('reg-username').value.trim().toLowerCase();
       const password = document.getElementById('reg-password').value;
       const confirm = document.getElementById('reg-confirm').value;
 
       let hasError = false;
       if (!name) { setFeedback('fb-reg-name', 'Nama tidak boleh kosong!'); hasError = true; }
+      if (!email || !/\S+@\S+\.\S+/.test(email)) { setFeedback('fb-reg-email', 'Email tidak valid!'); hasError = true; }
       if (username.length < 3) { setFeedback('fb-reg-user', 'Username minimal 3 karakter!'); hasError = true; }
       else if (!/^[a-z0-9_]+$/.test(username)) { setFeedback('fb-reg-user', 'Hanya huruf, angka, underscore.'); hasError = true; }
       if (password.length < 6) { setFeedback('fb-reg-pw', 'Password minimal 6 karakter!'); hasError = true; }
       if (password !== confirm) { setFeedback('fb-reg-confirm', 'Password tidak sama!'); hasError = true; }
       if (hasError) return;
 
-      const users = getUsers();
-      if (users[username]) { setFeedback('fb-reg-user', 'Username sudah digunakan!'); return; }
-
       setLoading('reg-btn', true);
-      setTimeout(() => {
-        users[username] = { name, username, passwordHash: simpleHash(password), createdAt: new Date().toISOString() };
-        saveUsers(users);
+      try {
+        // Create user in Firebase Auth
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Save user profile in Firestore
+        await db.collection('users').doc(user.uid).set({
+          name: name,
+          email: email,
+          username: username,
+          createdAt: new Date().toISOString()
+        });
+
         showSuccess(`Akun berhasil dibuat! Selamat datang, ${name} 🌸`);
+        setTimeout(() => { window.location.replace('app.html'); }, 1200);
+      } catch (error) {
         setLoading('reg-btn', false);
-        setTimeout(() => { createSession(users[username]); window.location.replace('app.html'); }, 1200);
-      }, 600);
+        if (error.code === 'auth/email-already-in-use') {
+          setFeedback('fb-reg-email', 'Email sudah terdaftar!');
+        } else {
+          showError(error.message);
+        }
+      }
     }
 
     // ── LOGIN ──
-    function handleLogin(e) {
+    async function handleLogin(e) {
       e.preventDefault();
       hideAlerts(); clearValidation();
-      const username = document.getElementById('login-username').value.trim().toLowerCase();
+      let input = document.getElementById('login-username').value.trim().toLowerCase();
       const password = document.getElementById('login-password').value;
       const remember = document.getElementById('remember-me').checked;
 
       let hasError = false;
-      if (!username) { setFeedback('fb-login-user', 'Masukkan username!'); hasError = true; }
+      if (!input) { setFeedback('fb-login-user', 'Masukkan username / email!'); hasError = true; }
       if (!password) { setFeedback('fb-login-pw', 'Masukkan password!'); hasError = true; }
       if (hasError) return;
 
       setLoading('login-btn', true);
-      setTimeout(() => {
-        const users = getUsers();
-        const user = users[username];
-        if (!user) {
-          setFeedback('fb-login-user', 'Username tidak ditemukan!');
-          setLoading('login-btn', false);
-          return;
+
+      try {
+        // Jika input bukan email, cari email berdasarkan username di firestore
+        if (!input.includes('@')) {
+          const snapshot = await db.collection('users').where('username', '==', input).limit(1).get();
+          if (snapshot.empty) {
+            setFeedback('fb-login-user', 'Username tidak ditemukan!');
+            setLoading('login-btn', false);
+            return;
+          }
+          input = snapshot.docs[0].data().email;
         }
-        if (user.passwordHash !== simpleHash(password)) {
-          setFeedback('fb-login-pw', 'Password salah!');
-          setLoading('login-btn', false);
-          return;
+
+        // Login dengan Firebase Auth
+        if (remember) {
+          await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        } else {
+          await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
         }
-        showSuccess(`Selamat datang kembali, ${user.name}! 💕`);
-        createSession(user, remember);
+
+        await auth.signInWithEmailAndPassword(input, password);
+        showSuccess(`Selamat datang kembali! 💕`);
         setTimeout(() => window.location.replace('app.html'), 800);
-      }, 600);
+      } catch (error) {
+        setLoading('login-btn', false);
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+          setFeedback('fb-login-pw', 'Email atau password salah!');
+        } else {
+          showError(error.message);
+        }
+      }
     }
 
     function createSession(user, remember = false) {
