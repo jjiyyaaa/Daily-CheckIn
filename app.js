@@ -1707,22 +1707,13 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchQuote();
   fetchDailyTip();
   refreshDashboard();
-  initUserInfo();
+  
 });
 
 // ══════════════════════════════════════════
 // AUTH — Session & User
 // ══════════════════════════════════════════
-function getSession() {
-  try {
-    const s =
-      sessionStorage.getItem("dc_session") ||
-      localStorage.getItem("dc_session");
-    return s ? JSON.parse(s) : null;
-  } catch {
-    return null;
-  }
-}
+
 
 function handleLogout() {
   if (!confirm("Yakin mau logout? 👋")) return;
@@ -1949,43 +1940,3 @@ document.querySelectorAll(".nav-item[data-page]").forEach((btn) => {
   });
 });
 
-// ── Override initDate to also init user info ──
-const _origInitDate = initDate;
-function initDate() {
-  const now = new Date();
-  const h = now.getHours();
-  const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-  const months = [
-    "Januari",
-    "Februari",
-    "Maret",
-    "April",
-    "Mei",
-    "Juni",
-    "Juli",
-    "Agustus",
-    "September",
-    "Oktober",
-    "November",
-    "Desember",
-  ];
-  const dayStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-  const dateEl = document.getElementById("today-full-date");
-  const sideEl = document.getElementById("sidebar-date");
-  if (dateEl) dateEl.textContent = dayStr;
-  if (sideEl) sideEl.textContent = dayStr;
-  const wd = document.getElementById("watch-date");
-  if (wd) wd.value = todayKey();
-  const badge = document.getElementById("study-day-badge");
-  const dayNum = now.getDay();
-  if (badge) {
-    if (dayNum === 0 || dayNum === 6) {
-      badge.textContent = "🏖️ Weekend — Rest day!";
-      badge.style.cssText = "background:var(--peach-light);color:#A06040;";
-    } else {
-      badge.textContent = "📅 Weekday — Study time!";
-      badge.style.cssText = "background:var(--sky-light);color:#3A7A8A;";
-    }
-  }
-  initUserInfo();
-}
