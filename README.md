@@ -9,7 +9,7 @@
 
 <br />
 
-**Daily Check-in** is a personal web application designed with a beautiful *coquette pastel colorful* aesthetic. It serves as your digital safe space to write daily journals, track your mood, manage tasks, and monitor your spiritual routines (such as Quran recitation and fasting). All data is stored locally in your browser, ensuring 100% privacy and security! ✨
+**Daily Check-in** is a personal web application designed with a beautiful *coquette pastel colorful* aesthetic. It serves as your digital safe space to write daily journals, track your mood, manage tasks, and monitor your spiritual routines (such as Quran recitation and fasting). All data is now seamlessly synced across your devices using **Firebase Authentication & Firestore**, giving you a modern cloud-synced experience while keeping your data safe! ☁️🔒
 
 ## ✨ Key Features
 
@@ -18,12 +18,12 @@
 - 🕌 **Spiritual Tracker**: Keep track of your daily Quran recitation (Tilawah) streaks and use the heatmap calendar to monitor your fasting (Puasa) days.
 - 😌 **Mood Tracker**: Monitor your daily emotions through an intuitive monthly mood calendar visualization.
 - 📊 **Recap Dashboard**: A beautifully organized dashboard that recaps your weekly journal entries, annual achievement statistics, and historical logs.
-- 🔒 **100% Offline & Private**: Powered entirely by the browser's `localStorage` API. There are no external databases—your data belongs to you and stays on your device.
+- ☁️ **Cloud Synced**: Data is securely synced to Firebase Cloud Firestore in real-time, meaning you can access your journal and habits from your phone, laptop, or tablet effortlessly.
 - 📱 **Fully Responsive**: Perfectly tailored for both mobile and desktop screens, providing a seamless and aesthetic user experience everywhere.
 
 ## 🚀 Getting Started
 
-Since this application is built entirely with Vanilla JS, HTML, and CSS without relying on a backend, getting it running is extremely simple:
+This application relies on Firebase for its backend infrastructure. To get it running locally, follow these steps:
 
 1. **Clone the repository:**
    ```bash
