@@ -24,10 +24,13 @@
       align-items: center;
       justify-content: center;
       background: var(--soft-white);
-      padding: 20px;
+      padding: 40px 20px;
       position: relative;
-      overflow: hidden;
+      overflow-y: auto;
       font-family: 'Outfit', sans-serif;
+    }
+    .auth-card {
+      margin: auto;
     }
 
     /* Animated blobs */
@@ -411,15 +414,19 @@
     <!-- ── LOGIN FORM ── -->
     <form id="form-login" novalidate onsubmit="handleLogin(event)">
       <div class="auth-input-group">
+        <div style="position: relative;">
         <span class="input-prefix">👤</span>
         <input class="auth-input" type="text" id="login-username" placeholder="Username / Email" autocomplete="username" />
+        </div>
         <div class="field-feedback" id="fb-login-user"></div>
       </div>
       <div class="auth-input-group">
+        <div style="position: relative;">
         <span class="input-prefix">🔒</span>
         <input class="auth-input" type="password" id="login-password" placeholder="Password"
           autocomplete="current-password" />
-        <button type="button" class="pw-toggle" onclick="togglePw('login-password', this)">👁️</button>
+        
+        </div>
         <div class="field-feedback" id="fb-login-pw"></div>
       </div>
       <div class="remember-row">
@@ -437,26 +444,34 @@
     <!-- ── REGISTER FORM ── -->
     <form id="form-register" style="display:none;" novalidate onsubmit="handleRegister(event)">
       <div class="auth-input-group">
+        <div style="position: relative;">
         <span class="input-prefix">🌸</span>
         <input class="auth-input" type="text" id="reg-name" placeholder="Nama Lengkap" />
+        </div>
         <div class="field-feedback" id="fb-reg-name"></div>
       </div>
       <div class="auth-input-group">
+        <div style="position: relative;">
         <span class="input-prefix">📧</span>
         <input class="auth-input" type="email" id="reg-email" placeholder="Email" autocomplete="email" />
+        </div>
         <div class="field-feedback" id="fb-reg-email"></div>
       </div>
       <div class="auth-input-group">
+        <div style="position: relative;">
         <span class="input-prefix">👤</span>
         <input class="auth-input" type="text" id="reg-username" placeholder="Username (min. 3 karakter)"
           autocomplete="username" />
+        </div>
         <div class="field-feedback" id="fb-reg-user"></div>
       </div>
       <div class="auth-input-group">
+        <div style="position: relative;">
         <span class="input-prefix">🔒</span>
         <input class="auth-input" type="password" id="reg-password" placeholder="Password (min. 6 karakter)"
           autocomplete="new-password" oninput="updatePwStrength(this.value)" />
-        <button type="button" class="pw-toggle" onclick="togglePw('reg-password', this)">👁️</button>
+        
+        </div>
         <div class="pw-strength" id="pw-strength">
           <div class="pw-strength-bar">
             <div class="pw-strength-fill" id="pw-strength-fill"></div>
@@ -466,10 +481,12 @@
         <div class="field-feedback" id="fb-reg-pw"></div>
       </div>
       <div class="auth-input-group">
+        <div style="position: relative;">
         <span class="input-prefix">🔐</span>
         <input class="auth-input" type="password" id="reg-confirm" placeholder="Konfirmasi Password"
           autocomplete="new-password" />
-        <button type="button" class="pw-toggle" onclick="togglePw('reg-confirm', this)">👁️</button>
+        
+        </div>
         <div class="field-feedback" id="fb-reg-confirm"></div>
       </div>
       <button type="submit" class="auth-btn" id="reg-btn">Daftar & Mulai ✨</button>
