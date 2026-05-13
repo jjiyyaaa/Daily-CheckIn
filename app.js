@@ -13,7 +13,7 @@ auth.onAuthStateChanged(async (user) => {
     return;
   }
   currentUser = user;
-  
+
   // Update sidebar info
   const snapshot = await db.collection('users').doc(user.uid).get();
   if (snapshot.exists) {
@@ -30,7 +30,7 @@ auth.onAuthStateChanged(async (user) => {
     dataSnapshot.forEach(doc => {
       cloudData[doc.id] = doc.data().value;
     });
-  } catch(e) {
+  } catch (e) {
     console.error("Failed to load cloud data", e);
   }
 
@@ -86,6 +86,17 @@ function saveData(key, val) {
 }
 
 // ── INIT APP ──
+// ── DOM Batching Helper ──
+function renderList(containerId, items, templateFn, emptyHtml = "") {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!items || items.length === 0) {
+    container.innerHTML = emptyHtml;
+    return;
+  }
+  container.innerHTML = items.map(templateFn).join("");
+}
+
 function initApp() {
   initDate();
   fetchQuote();
@@ -93,7 +104,7 @@ function initApp() {
 }
 
 // ── LOGOUT ──
-window.handleLogout = function() {
+window.handleLogout = function () {
   if (!confirm("Yakin mau logout? 🚪")) return;
   auth.signOut().then(() => {
     localStorage.clear();
@@ -347,20 +358,24 @@ function persistJournal(entry) {
   saveData("dc_journal", all);
 }
 
+let journalTimeout;
 function saveJournal() {
-  const today = getJournalEntry();
-  persistJournal({
-    ...today,
-    mood: selectedMood,
-    vibe: selectedVibe,
-    lineNote: document.getElementById("aline-note-input")?.value || "",
-    gratitude: document.getElementById("gratitude-input")?.value || "",
-    brainDump: document.getElementById("braindump-input")?.value || "",
-    affirmations: document.getElementById("affirmation-input")?.value || "",
-    positiveActs: today.positiveActs || [],
-    wishlist: today.wishlist || [],
-    dailyTodo: today.dailyTodo || [],
-  });
+  clearTimeout(journalTimeout);
+  journalTimeout = setTimeout(() => {
+    const today = getJournalEntry();
+    persistJournal({
+      ...today,
+      mood: selectedMood,
+      vibe: selectedVibe,
+      lineNote: document.getElementById("aline-note-input")?.value || "",
+      gratitude: document.getElementById("gratitude-input")?.value || "",
+      brainDump: document.getElementById("braindump-input")?.value || "",
+      affirmations: document.getElementById("affirmation-input")?.value || "",
+      positiveActs: today.positiveActs || [],
+      wishlist: today.wishlist || [],
+      dailyTodo: today.dailyTodo || [],
+    });
+  }, 500);
 }
 
 function loadJournal() {
@@ -753,7 +768,7 @@ function renderStudyLog() {
       <div class="study-item-info">
         <div class="study-item-name">${escHtml(l.subject)}</div>
         <div class="study-item-meta">
-          <span style="background:${typeColors[l.type] || "var(--gray-100)"};padding:2px 8px;border-radius:100px;font-size:0.72rem;font-weight:600">${l.type}</span>
+          <span style="background:${typeColors[l.type] || "var(--gray-100)"};padding:2px 8px;border-radius:100px;font-size:0.72rem;font-weight:600">${escHtml(l.type)}</span>
           &nbsp;· ${l.duration} menit
         </div>
       </div>
@@ -859,9 +874,12 @@ function renderDashboardHabits() {
 // SPIRITUAL — TILAWAH
 // ══════════════════════════════════════════
 function updateTilawahRing() {
-  const pages = parseInt(
+  const inputPages = parseInt(
     document.getElementById("tilawah-pages")?.value || "0",
   );
+  const today = loadData("dc_tilawah", []).find((l) => l.date === todayKey());
+  const existingPages = today ? today.pages : 0;
+  const pages = existingPages + inputPages;
   const target = 5;
   const pct = Math.min(pages / target, 1);
   const circ = 301.6;
@@ -896,27 +914,56 @@ function updateTilawahRing() {
 }
 
 function saveTilawah() {
-  const pages = parseInt(
+  const inputPages = parseInt(
     document.getElementById("tilawah-pages")?.value || "0",
   );
-  if (!pages) {
-    showToast("Isi dulu jumlah lembar!", "error");
+  if (!inputPages || inputPages <= 0) {
+    showToast("Isi dulu jumlah lembar (minimal 1)!", "error");
     return;
   }
   const logs = loadData("dc_tilawah", []);
-  logs.unshift({
-    id: Date.now().toString(),
-    date: todayKey(),
-    pages,
-    surah: document.getElementById("tilawah-surah")?.value || "",
-    ayat: document.getElementById("tilawah-ayat")?.value || "",
-    juz: document.getElementById("tilawah-juz")?.value || "",
-    notes: document.getElementById("tilawah-notes")?.value || "",
-  });
+  const today = logs.find((l) => l.date === todayKey());
+
+  if (today) {
+    today.pages += inputPages;
+    if (document.getElementById("tilawah-surah")?.value) today.surah = document.getElementById("tilawah-surah").value;
+    if (document.getElementById("tilawah-ayat")?.value) today.ayat = document.getElementById("tilawah-ayat").value;
+    if (document.getElementById("tilawah-juz")?.value) today.juz = document.getElementById("tilawah-juz").value;
+    if (document.getElementById("tilawah-notes")?.value) {
+      if (today.notes) {
+        today.notes += "\n" + document.getElementById("tilawah-notes").value;
+      } else {
+        today.notes = document.getElementById("tilawah-notes").value;
+      }
+    }
+  } else {
+    logs.unshift({
+      id: Date.now().toString(),
+      date: todayKey(),
+      pages: inputPages,
+      surah: document.getElementById("tilawah-surah")?.value || "",
+      ayat: document.getElementById("tilawah-ayat")?.value || "",
+      juz: document.getElementById("tilawah-juz")?.value || "",
+      notes: document.getElementById("tilawah-notes")?.value || "",
+    });
+  }
   saveData("dc_tilawah", logs.slice(0, 50));
+
+  document.getElementById("tilawah-pages").value = "";
+  document.getElementById("tilawah-notes").value = "";
+
   renderTilawah();
   updateDashboardStats();
-  showToast(`Tilawah ${pages} lembar dicatat! 🌿`, "success");
+  showToast(`Tilawah ditambah ${inputPages} lembar! 🌿`, "success");
+}
+
+function deleteTilawah(id) {
+  if (!confirm("Hapus catatan tilawah ini?")) return;
+  const logs = loadData("dc_tilawah", []).filter((l) => l.id !== id);
+  saveData("dc_tilawah", logs);
+  renderTilawah();
+  updateDashboardStats();
+  showToast("Catatan tilawah dihapus 🗑️");
 }
 
 function renderTilawah() {
@@ -925,11 +972,9 @@ function renderTilawah() {
   const logs = loadData("dc_tilawah", []);
   const today = loadData("dc_tilawah", []).find((l) => l.date === todayKey());
   if (today) {
-    document.getElementById("tilawah-pages").value = today.pages;
     document.getElementById("tilawah-surah").value = today.surah;
     document.getElementById("tilawah-ayat").value = today.ayat;
     document.getElementById("tilawah-juz").value = today.juz;
-    document.getElementById("tilawah-notes").value = today.notes;
     updateTilawahRing();
   }
   if (!logs.length) {
@@ -943,10 +988,13 @@ function renderTilawah() {
     <div style="padding:12px 16px;background:var(--mint-light);border-radius:var(--radius-sm);margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
         <span style="font-weight:700;font-size:0.9rem">${l.surah || "Tilawah"} ${l.ayat ? "(" + l.ayat + ")" : ""}</span>
-        <span style="font-size:0.75rem;background:${l.pages >= 5 ? "var(--mint)" : "var(--yellow)"};padding:2px 10px;border-radius:100px;font-weight:600">${l.pages} lbr</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:0.75rem;background:${l.pages >= 5 ? "var(--mint)" : "var(--yellow)"};padding:2px 10px;border-radius:100px;font-weight:600">${l.pages} lbr</span>
+          <button onclick="deleteTilawah('${l.id}')" style="background:none;border:none;color:var(--coral);cursor:pointer;font-size:1.1rem;line-height:1;padding:0;" title="Hapus">🗑️</button>
+        </div>
       </div>
       <div style="font-size:0.78rem;color:var(--text-mid)">${l.date} · Juz ${l.juz || "?"}</div>
-      ${l.notes ? `<div style="font-size:0.8rem;color:var(--text-mid);margin-top:6px;font-style:italic">"${escHtml(l.notes)}"</div>` : ""}
+      ${l.notes ? `<div style="font-size:0.8rem;color:var(--text-mid);margin-top:6px;font-style:italic;white-space:pre-wrap">"${escHtml(l.notes)}"</div>` : ""}
     </div>`,
     )
     .join("");
@@ -1074,9 +1122,22 @@ function renderRecap() {
     doneTasks = 0;
   const allTasks = loadData("dc_tasks", []);
   allTasks.forEach((t) => {
-    if (inRange(t.createdDate, range) || (t.completed && inRange(t.completedDate, range))) {
+    const created = new Date(t.createdDate + "T00:00:00");
+    const createdBeforeEnd = created <= range.end;
+    let relevant = false;
+    if (createdBeforeEnd) {
+      if (!t.completed) {
+        relevant = true;
+      } else {
+        const completed = new Date(t.completedDate + "T00:00:00");
+        if (completed >= range.start) {
+          relevant = true;
+        }
+      }
+    }
+    if (relevant) {
       totalTasks++;
-      if (t.completed) doneTasks++;
+      if (t.completed && inRange(t.completedDate, range)) doneTasks++;
     }
   });
 
@@ -1224,69 +1285,69 @@ function renderRecap() {
   }
 
   // Render tilawah pixel grid
-    const pixelGrid = document.getElementById("tilawah-pixel-grid");
-    const tilawahLabels = document.getElementById("tilawah-day-labels");
-    if (pixelGrid) {
-      if (recapPeriod === "year") {
-        if (tilawahLabels) tilawahLabels.style.display = "none";
-        
-        let html = '<div class="tilawah-year-grid">';
-        const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-        
-        for (let m = 0; m < 12; m++) {
-          html += `<div class="tilawah-year-month"><div class="tilawah-month-header">${months[m]}</div>`;
-          for (let d = 1; d <= 31; d++) {
-            // Check if this day exists in this month (year = current year in range)
-            const yearNum = new Date(range.start).getFullYear();
-            const dateObj = new Date(yearNum, m, d);
-            
-            if (dateObj.getMonth() !== m) {
-              html += `<div class="tilawah-year-cell empty"></div>`;
+  const pixelGrid = document.getElementById("tilawah-pixel-grid");
+  const tilawahLabels = document.getElementById("tilawah-day-labels");
+  if (pixelGrid) {
+    if (recapPeriod === "year") {
+      if (tilawahLabels) tilawahLabels.style.display = "none";
+
+      let html = '<div class="tilawah-year-grid">';
+      const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+
+      for (let m = 0; m < 12; m++) {
+        html += `<div class="tilawah-year-month"><div class="tilawah-month-header">${months[m]}</div>`;
+        for (let d = 1; d <= 31; d++) {
+          // Check if this day exists in this month (year = current year in range)
+          const yearNum = new Date(range.start).getFullYear();
+          const dateObj = new Date(yearNum, m, d);
+
+          if (dateObj.getMonth() !== m) {
+            html += `<div class="tilawah-year-cell empty"></div>`;
+          } else {
+            const key = localDateKey(dateObj);
+            const entry = tilawah.find((l) => l.date === key) || { pages: 0 };
+            const level = Math.min(entry.pages, 5);
+
+            if (dateObj > new Date() || dateObj < new Date(range.start)) {
+              html += `<div class="tilawah-year-cell" style="opacity: 0.3; background: #fafafa;">${d}</div>`;
             } else {
-              const key = localDateKey(dateObj);
-              const entry = tilawah.find((l) => l.date === key) || { pages: 0 };
-              const level = Math.min(entry.pages, 5);
-              
-              if (dateObj > new Date() || dateObj < new Date(range.start)) {
-                 html += `<div class="tilawah-year-cell" style="opacity: 0.3; background: #fafafa;">${d}</div>`;
-              } else {
-                 if (level > 0) {
-                     html += `<div class="tilawah-year-cell tilawah-${level}" title="${key}: ${entry.pages} lbr" style="position:relative;">
+              if (level > 0) {
+                html += `<div class="tilawah-year-cell tilawah-${level}" title="${key}: ${entry.pages} lbr" style="position:relative;">
    <span style="position:absolute; top:2px; left:3px; font-size:0.45rem; opacity:0.7;">${d}</span>
    <span style="font-weight:bold; font-size:0.65rem;">${entry.pages}</span>
  </div>`;
-                 } else {
-                     html += `<div class="tilawah-year-cell" title="${key}: Belum ada" style="position:relative;">
+              } else {
+                html += `<div class="tilawah-year-cell" title="${key}: Belum ada" style="position:relative;">
    <span style="position:absolute; top:2px; left:3px; font-size:0.45rem; opacity:0.7;">${d}</span>
  </div>`;
-                 }
               }
             }
           }
-          html += `</div>`;
         }
-        html += '</div>';
-        pixelGrid.innerHTML = html;
-        pixelGrid.style.display = "block"; // override generic grid
-      } else {
-        if (tilawahLabels) tilawahLabels.style.display = "grid";
-        pixelGrid.style.display = "grid"; // reset to standard pixel-grid
-        
-        const daysHtml = recentDates
-          .map((d) => {
-            const key = localDateKey(d);
-            const entry = tilawah.find((l) => l.date === key) || { pages: 0 };
-            const level = Math.min(entry.pages, 5);
-            const label = entry.pages ? `${entry.pages} lbr` : "0";
-            return `<div class="pixel-cell tilawah-${level}" title="${key} — ${label}" style="position: relative; display: flex; align-items: center; justify-content: center;">
+        html += `</div>`;
+      }
+      html += '</div>';
+      pixelGrid.innerHTML = html;
+      pixelGrid.style.display = "block"; // override generic grid
+    } else {
+      if (tilawahLabels) tilawahLabels.style.display = "grid";
+      pixelGrid.style.display = "grid"; // reset to standard pixel-grid
+
+      const daysHtml = recentDates
+        .map((d) => {
+          const key = localDateKey(d);
+          const entry = tilawah.find((l) => l.date === key) || { pages: 0 };
+          const level = Math.min(entry.pages, 5);
+          const label = entry.pages ? `${entry.pages} lbr` : "0";
+          return `<div class="pixel-cell tilawah-${level}" title="${key} — ${label}" style="position: relative; display: flex; align-items: center; justify-content: center;">
   <span style="position: absolute; top: 3px; left: 4px; font-size: 0.55rem; line-height: 1; opacity: 0.75;">${d.getDate()}</span>
   ${entry.pages ? `<span style="font-weight: 700; font-size: 0.85rem;">${entry.pages}</span>` : ""}
 </div>`;
-          })
-          .join("");
-        pixelGrid.innerHTML = emptyHtml + daysHtml;
-      }
+        })
+        .join("");
+      pixelGrid.innerHTML = emptyHtml + daysHtml;
     }
+  }
 
   // Render habit grid
   const habitGrid = document.getElementById("habit-grid");
@@ -1295,34 +1356,34 @@ function renderRecap() {
       habitGrid.innerHTML = `<div class="journal-empty">Belum ada habit. Tambahkan habit di halaman Productivity dulu.</div>`;
     } else {
       if (recapPeriod === "year") {
-         let html = '';
-         const yearNum = new Date(range.start).getFullYear();
-         const startDate = new Date(yearNum, 0, 1);
-         const firstDayOffset = (startDate.getDay() + 6) % 7; // Monday = 0
-         
-         habitDefs.forEach(def => {
-            html += `<div class="github-habit-row">
+        let html = '';
+        const yearNum = new Date(range.start).getFullYear();
+        const startDate = new Date(yearNum, 0, 1);
+        const firstDayOffset = (startDate.getDay() + 6) % 7; // Monday = 0
+
+        habitDefs.forEach(def => {
+          html += `<div class="github-habit-row">
                <div class="github-habit-label">${escHtml(def.name)}</div>
                <div class="github-graph">`;
-               
-            for (let i = 0; i < firstDayOffset; i++) {
-               html += `<div class="github-cell empty"></div>`;
+
+          for (let i = 0; i < firstDayOffset; i++) {
+            html += `<div class="github-cell empty"></div>`;
+          }
+
+          let d = new Date(startDate);
+          while (d.getFullYear() === yearNum) {
+            const key = localDateKey(d);
+            const active = habitData[key]?.[def.id];
+            if (d > new Date() || d < new Date(range.start)) {
+              html += `<div class="github-cell" style="opacity:0.3; background:#fafafa;"></div>`;
+            } else {
+              html += `<div class="github-cell ${active ? "active" : ""}" title="${key}: ${active ? "Selesai" : "Bolong"}"></div>`;
             }
-            
-            let d = new Date(startDate);
-            while (d.getFullYear() === yearNum) {
-               const key = localDateKey(d);
-               const active = habitData[key]?.[def.id];
-               if (d > new Date() || d < new Date(range.start)) {
-                  html += `<div class="github-cell" style="opacity:0.3; background:#fafafa;"></div>`;
-               } else {
-                  html += `<div class="github-cell ${active ? "active" : ""}" title="${key}: ${active ? "Selesai" : "Bolong"}"></div>`;
-               }
-               d.setDate(d.getDate() + 1);
-            }
-            html += `</div></div>`;
-         });
-         habitGrid.innerHTML = html;
+            d.setDate(d.getDate() + 1);
+          }
+          html += `</div></div>`;
+        });
+        habitGrid.innerHTML = html;
       } else {
         const dateKeys = recentDates.map((d) => localDateKey(d));
         const headerCells = dateKeys
@@ -1503,7 +1564,7 @@ function renderRecap() {
           return `
           <div class="aline-card ${vibeClass}">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-              <strong>${j.vibe}</strong>
+              <strong>${escHtml(j.vibe)}</strong>
               <span style="font-size:0.78rem;color:var(--text-mid)">${date}</span>
             </div>
             <p style="margin:10px 0 0;color:var(--text-dark)">${escHtml(j.lineNote || "Tidak ada catatan.")}</p>
@@ -1608,7 +1669,7 @@ function checkDeadlineNotifications() {
   dueTasks.forEach((t) => {
     if (!notified.includes(t.id)) {
       new Notification("⏰ Tenggat Task Hari Ini!", {
-        body: `"${t.text}" harus diselesaikan hari ini!`,
+        body: `"${escHtml(t.text)}" harus diselesaikan hari ini!`,
         tag: t.id,
       });
       notified.push(t.id);
@@ -1707,7 +1768,7 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchQuote();
   fetchDailyTip();
   refreshDashboard();
-  
+
 });
 
 // ══════════════════════════════════════════

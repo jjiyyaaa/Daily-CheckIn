@@ -608,20 +608,6 @@
       label.textContent = lv.l;
     }
 
-    // ── Simple hash ──
-    function simpleHash(str) {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-        hash |= 0;
-      }
-      return hash.toString(36);
-    }
-
-    // ── Users DB ──
-    function getUsers() { try { return JSON.parse(localStorage.getItem('dc_users')) || {}; } catch { return {}; } }
-    function saveUsers(u) { localStorage.setItem('dc_users', JSON.stringify(u)); }
-
     // ── Loading state ──
     function setLoading(btnId, loading) {
       const btn = document.getElementById(btnId);
@@ -727,8 +713,7 @@
       }
     }
 
-    function createSession(user, remember = false) {
-      const session = JSON.stringify({ username: user.username, name: user.name, loginAt: new Date().toISOString() });
+    );
       sessionStorage.setItem('dc_session', session);
       if (remember) localStorage.setItem('dc_session', session);
     }

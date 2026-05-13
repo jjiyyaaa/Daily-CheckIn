@@ -625,7 +625,7 @@
         <span class="logo-icon">🌸</span>
         <span>Daily Check-in</span>
       </div>
-      <p style="color:var(--text-light);font-size:0.85rem;">Made with 💕 for your well-being</p>
+      <p style="color:var(--text-light);font-size:0.85rem;margin:0;">Made with 💕 for your well-being</p>
     </div>
   </footer>
 
@@ -733,6 +733,14 @@
       { content: "Be gentle with yourself. Growth takes time.", author: "Daily Check-in" },
     ];
 
+    function escHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/[&<>"']/g, (m) => {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+        return map[m];
+      });
+    }
+
     async function fetchLandingQuote() {
       const card = document.getElementById('landing-quote-card');
       card.innerHTML = `<div class="rq-loader"><div class="rq-spinner"></div> Fetching…</div>`;
@@ -744,14 +752,14 @@
         if (!res.ok) throw new Error('API error');
         const data = await res.json();
         card.innerHTML = `
-          <p style="font-style:italic;color:var(--text-dark);font-size:0.95rem;margin-bottom:6px;">"${data.content}"</p>
-          <span style="font-size:0.8rem;color:var(--pink-deep);font-weight:700;">— ${data.author}</span>
+          <p style="font-style:italic;color:var(--text-dark);font-size:0.95rem;margin-bottom:6px;">"${escHtml(data.content)}"</p>
+          <span style="font-size:0.8rem;color:var(--pink-deep);font-weight:700;">— ${escHtml(data.author)}</span>
         `;
       } catch {
         const fb = LANDING_FALLBACK_QUOTES[Math.floor(Math.random() * LANDING_FALLBACK_QUOTES.length)];
         card.innerHTML = `
-          <p style="font-style:italic;color:var(--text-dark);font-size:0.95rem;margin-bottom:6px;">"${fb.content}"</p>
-          <span style="font-size:0.8rem;color:var(--pink-deep);font-weight:700;">— ${fb.author}</span>
+          <p style="font-style:italic;color:var(--text-dark);font-size:0.95rem;margin-bottom:6px;">"${escHtml(fb.content)}"</p>
+          <span style="font-size:0.8rem;color:var(--pink-deep);font-weight:700;">— ${escHtml(fb.author)}</span>
           <br/><small style="color:var(--text-light);font-size:0.72rem;">✈️ Offline mode</small>
         `;
       }
@@ -783,14 +791,14 @@
         };
         const bg = typeColors[data.type] || 'var(--gray-100)';
         card.innerHTML = `
-          <p style="color:var(--text-dark);font-size:0.95rem;margin-bottom:8px;">${data.activity}</p>
-          <span style="padding:3px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;background:${bg};color:var(--text-mid);">${data.type}</span>
+          <p style="color:var(--text-dark);font-size:0.95rem;margin-bottom:8px;">${escHtml(data.activity)}</p>
+          <span style="padding:3px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;background:${bg};color:var(--text-mid);">${escHtml(data.type)}</span>
         `;
       } catch {
         const fb = ACTIVITY_FALLBACK[Math.floor(Math.random() * ACTIVITY_FALLBACK.length)];
         card.innerHTML = `
-          <p style="color:var(--text-dark);font-size:0.95rem;margin-bottom:8px;">${fb.activity}</p>
-          <span style="padding:3px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;background:var(--mint-light);color:#3A8A6A;">${fb.type}</span>
+          <p style="color:var(--text-dark);font-size:0.95rem;margin-bottom:8px;">${escHtml(fb.activity)}</p>
+          <span style="padding:3px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;background:var(--mint-light);color:#3A8A6A;">${escHtml(fb.type)}</span>
           <br/><small style="color:var(--text-light);font-size:0.72rem;">✈️ Offline mode</small>
         `;
       }

@@ -2352,6 +2352,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     color: var(--text-light);
     transition: 0.2s;
 }
+.tilawah-year-cell.tilawah-0 { background: #f5f5fb; color: var(--text-light); }
+.tilawah-year-cell.tilawah-1 { background: #d8eeff; color: var(--text-dark); border-color: rgba(109, 83, 99, 0.2); }
+.tilawah-year-cell.tilawah-2 { background: #d9f7e9; color: var(--text-dark); border-color: rgba(109, 83, 99, 0.2); }
+.tilawah-year-cell.tilawah-3 { background: #ffe6c9; color: var(--text-dark); border-color: rgba(109, 83, 99, 0.2); }
+.tilawah-year-cell.tilawah-4 { background: #ffd9eb; color: var(--text-dark); border-color: rgba(109, 83, 99, 0.2); }
+.tilawah-year-cell.tilawah-5 { background: #e7d6ff; color: var(--text-dark); border-color: rgba(109, 83, 99, 0.2); }
 .tilawah-year-cell:not(.empty):hover {
     transform: scale(1.1);
     z-index: 2;
