@@ -828,7 +828,142 @@
         fetchActivity();
       }, 100);
     });
+
+    // ── CUSTOMER SERVICE CHATBOT LOGIC ──
+    const chatbotToggle = document.getElementById('cs-chatbot-toggle');
+    const chatbotBox = document.getElementById('cs-chatbot-box');
+    const chatbotClose = document.getElementById('cs-chatbot-close');
+    const chatbotSend = document.getElementById('cs-chatbot-send');
+    const chatbotInput = document.getElementById('cs-chatbot-input');
+    const chatbotMessages = document.getElementById('cs-chatbot-messages');
+
+    // Toggle Chatbox
+    chatbotToggle.addEventListener('click', () => {
+      const isVisible = chatbotBox.style.display === 'flex';
+      chatbotBox.style.display = isVisible ? 'none' : 'flex';
+      if (!isVisible) {
+        chatbotInput.focus();
+        smoothScrollToBottom();
+      }
+    });
+
+    chatbotClose.addEventListener('click', () => {
+      chatbotBox.style.display = 'none';
+    });
+
+    // Helper to scroll to bottom smoothly
+    function smoothScrollToBottom() {
+      chatbotMessages.scrollTo({
+        top: chatbotMessages.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+
+    // Send Message
+    function sendMessage() {
+      const text = chatbotInput.value.trim();
+      if (!text) return;
+
+      // Append user message
+      appendMessage(text, 'user');
+      chatbotInput.value = '';
+
+      // Auto-scroll after user message
+      smoothScrollToBottom();
+
+      // Show typing indicator
+      showTypingIndicator();
+
+      // Simulate typing & reply (1 second delay)
+      setTimeout(() => {
+        removeTypingIndicator();
+        const reply = getBotReply(text);
+        appendMessage(reply, 'bot');
+        smoothScrollToBottom();
+      }, 1000);
+    }
+
+    function appendMessage(text, sender) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `cs-msg cs-msg-${sender}`;
+      msgDiv.innerHTML = text;
+      chatbotMessages.appendChild(msgDiv);
+    }
+
+    let typingIndicatorEl = null;
+
+    function showTypingIndicator() {
+      if (typingIndicatorEl) return;
+      typingIndicatorEl = document.createElement('div');
+      typingIndicatorEl.className = 'cs-msg cs-msg-bot cs-typing';
+      typingIndicatorEl.innerHTML = '<span></span><span></span><span></span>';
+      chatbotMessages.appendChild(typingIndicatorEl);
+      smoothScrollToBottom();
+    }
+
+    function removeTypingIndicator() {
+      if (typingIndicatorEl) {
+        typingIndicatorEl.remove();
+        typingIndicatorEl = null;
+      }
+    }
+
+    function getBotReply(text) {
+      const lower = text.toLowerCase();
+      if (lower.includes('password') || lower.includes('lupa') || lower.includes('reset')) {
+        return 'Untuk reset password, silakan buka halaman Login, klik link <strong>"Lupa Password?"</strong> di bawah form Login, masukkan email terdaftar Anda, lalu input password baru Anda! 🌸';
+      }
+      if (lower.includes('halo') || lower.includes('hai') || lower.includes('hello') || lower.includes('hi')) {
+        return 'Halo! Selamat datang di Daily Check-in Support. Ada yang bisa kami bantu? 💖';
+      }
+      if (lower.includes('fitur') || lower.includes('modul') || lower.includes('app') || lower.includes('aplikasi')) {
+        return 'Daily Check-in dilengkapi dengan Gratitude Journal, Mood Tracker, Habit Tracker, Tilawah Indicator, dan Watch List. Semuanya tersimpan aman di browser Anda! 🌷';
+      }
+      return 'Terima kasih atas pesan Anda! Chatbot kami saat ini berada dalam mode simulasi. Ketik <strong>"password"</strong> untuk bantuan reset sandi atau <strong>"fitur"</strong> untuk melihat daftar modul. ✨';
+    }
+
+    chatbotSend.addEventListener('click', sendMessage);
+    chatbotInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
   </script>
+
+  <!-- ── CUSTOMER SERVICE CHATBOT ── -->
+  <div id="cs-chatbot-container">
+    <!-- Chat Button -->
+    <button id="cs-chatbot-toggle" aria-label="Open Customer Service Chat">
+      <span>💬</span>
+    </button>
+
+    <!-- Chat Box -->
+    <div id="cs-chatbot-box">
+      <!-- Header -->
+      <div id="cs-chatbot-header">
+        <div class="d-flex align-items-center gap-2">
+          <span style="font-size:1.2rem;">🌸</span>
+          <div>
+            <div style="font-weight:700;font-size:0.9rem;line-height:1.2;">Check-in Support</div>
+            <div style="font-size:0.7rem;opacity:0.8;">Online • Asisten Virtual</div>
+          </div>
+        </div>
+        <button id="cs-chatbot-close" aria-label="Close Chat">&times;</button>
+      </div>
+
+      <!-- Messages Area -->
+      <div id="cs-chatbot-messages">
+        <!-- Default Welcome Message -->
+        <div class="cs-msg cs-msg-bot">
+          Halo! Selamat datang di Daily Check-in Support. Ada yang bisa kami bantu? 💖 Coba ketik <strong>"password"</strong> atau <strong>"fitur"</strong>!
+        </div>
+      </div>
+
+      <!-- Input Bar -->
+      <div id="cs-chatbot-input-wrap">
+        <input type="text" id="cs-chatbot-input" placeholder="Tulis pesan Anda..." autocomplete="off" />
+        <button id="cs-chatbot-send" aria-label="Send Message">▶</button>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
