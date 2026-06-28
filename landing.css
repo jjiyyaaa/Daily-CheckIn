@@ -160,7 +160,7 @@
   display: inline-block;
   padding: 8px 18px;
   background: var(--pink-light);
-  color: var(--pink-deep);
+  color: #A6264C;
   border-radius: 100px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -175,7 +175,7 @@
 }
 
 .hero-title em {
-  color: var(--pink-deep);
+  color: #C03C60;
   font-style: italic;
 }
 
@@ -213,7 +213,7 @@
 
 .stat-label {
   font-size: 0.75rem;
-  color: var(--text-light);
+  color: var(--text-mid);
   font-weight: 500;
 }
 
@@ -341,7 +341,7 @@
   display: inline-block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--pink-deep);
+  color: #A6264C;
   background: var(--pink-light);
   padding: 6px 16px;
   border-radius: 100px;
@@ -355,7 +355,7 @@
 }
 
 .section-heading em {
-  color: var(--pink-deep);
+  color: #C03C60;
 }
 
 .section-sub {
@@ -449,7 +449,7 @@
   flex: 1;
 }
 
-.module-info h4 {
+.module-info h3 {
   font-size: 1rem;
   margin-bottom: 4px;
 }
