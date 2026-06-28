@@ -8,17 +8,19 @@
   <meta name="description"
     content="Aplikasi journaling personal yang cheerful dan colorful. Catat gratitude, mood, produktivitas, dan well-being kamu setiap hari." />
 
+  <!-- Bootstrap CSS (Critical base styling first, synchronous) -->
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
   <!-- Preconnect to Font domains -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
   <!-- Preload Critical Stylesheets -->
-  <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" />
   <link rel="preload" href="style.css" as="style" />
   <link rel="preload" href="landing.css" as="style" />
 
   <!-- Critical CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="style.css" rel="stylesheet" />
   <link href="landing.css" rel="stylesheet" />
 
@@ -654,7 +656,7 @@
         <span class="logo-icon">🌸</span>
         <span>Daily Check-in</span>
       </div>
-      <p style="color:var(--text-light);font-size:0.85rem;margin:0;">Made with 💕 for your well-being</p>
+      <p style="color:#6B5B6B;font-size:0.85rem;margin:0;">Made with 💕 for your well-being</p>
     </div>
   </footer>
 
@@ -807,32 +809,18 @@
 
     async function fetchActivity() {
       const card = document.getElementById('activity-card');
-      card.innerHTML = `<div class="rq-loader"><div class="rq-spinner"></div> Finding idea…</div>`;
-      try {
-        const res = await fetch(
-          "https://bored-api.appbrewery.com/random",
-          { signal: AbortSignal.timeout(5000) }
-        );
-        if (!res.ok) throw new Error('API error');
-        const data = await res.json();
-        const typeColors = {
-          education: 'var(--sky-light)', relaxation: 'var(--mint-light)',
-          social: 'var(--pink-light)', music: 'var(--lav-light)',
-          recreational: 'var(--yellow-light)', cooking: 'var(--peach-light)',
-        };
-        const bg = typeColors[data.type] || 'var(--gray-100)';
-        card.innerHTML = `
-          <p style="color:var(--text-dark);font-size:0.95rem;margin-bottom:8px;">${escHtml(data.activity)}</p>
-          <span style="padding:3px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;background:${bg};color:var(--text-mid);">${escHtml(data.type)}</span>
-        `;
-      } catch {
-        const fb = ACTIVITY_FALLBACK[Math.floor(Math.random() * ACTIVITY_FALLBACK.length)];
-        card.innerHTML = `
-          <p style="color:var(--text-dark);font-size:0.95rem;margin-bottom:8px;">${escHtml(fb.activity)}</p>
-          <span style="padding:3px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;background:var(--pink-light);color:#A6264C;">${escHtml(fb.type)}</span>
-          <br/><small style="color:var(--text-mid);font-size:0.72rem;font-weight:500;">✈️ Offline mode (CORS/Network Fallback)</small>
-        `;
-      }
+      // Directly pull from local fallbacks to completely eliminate CORS errors
+      const fb = ACTIVITY_FALLBACK[Math.floor(Math.random() * ACTIVITY_FALLBACK.length)];
+      const typeColors = {
+        relaxation: 'var(--mint-light)', wellbeing: 'var(--sky-light)',
+        social: 'var(--pink-light)', education: 'var(--lav-light)',
+        creative: 'var(--yellow-light)',
+      };
+      const bg = typeColors[fb.type] || 'var(--gray-100)';
+      card.innerHTML = `
+        <p style="color:var(--text-dark);font-size:0.95rem;margin-bottom:8px;">${escHtml(fb.activity)}</p>
+        <span style="padding:3px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;background:${bg};color:#A6264C;">${escHtml(fb.type)}</span>
+      `;
     }
 
     // Auto-fetch on load (fully asynchronous, non-blocking for FCP)

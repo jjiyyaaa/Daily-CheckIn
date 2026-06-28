@@ -317,7 +317,7 @@
 
 .mockup-task.done {
   background: var(--mint-light);
-  color: #3A8A6A;
+  color: #15482e;
   text-decoration: line-through;
 }
 
@@ -822,4 +822,8 @@
   } 40% { 
     transform: scale(1.0);
   }
+}
+
+.lp-footer p {
+  color: #6B5B6B !important;
 }

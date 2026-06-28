@@ -586,8 +586,16 @@
         }
       } catch (error) {
         if (error.code === 'auth/user-not-found') {
+          alert("Yah, email kamu belum terdaftar di sistem!");
           feedback.textContent = 'Email tidak terdaftar!';
+        } else if (error.code === 'auth/invalid-email') {
+          alert("Format email salah tuh, Jiya!");
+          feedback.textContent = 'Format email tidak valid!';
+        } else if (error.code === 'auth/operation-not-allowed') {
+          alert("Waduh, fitur reset password belum diaktifkan di Firebase Console!");
+          feedback.textContent = 'Fitur reset dinonaktifkan!';
         } else {
+          alert(error.message);
           feedback.textContent = error.message;
         }
       }
