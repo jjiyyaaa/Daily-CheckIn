@@ -208,7 +208,7 @@
   display: block;
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--pink-deep);
+  color: #A6264C;
 }
 
 .stat-label {
@@ -771,8 +771,11 @@
   border: none;
   outline: none;
   font-size: 0.85rem;
-  padding: 6px 0;
+  padding: 10px 15px;
   color: var(--text-dark);
+  resize: none;
+  max-height: 100px;
+  background: transparent;
 }
 
 #cs-chatbot-send {

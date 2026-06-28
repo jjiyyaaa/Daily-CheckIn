@@ -505,19 +505,18 @@
     </div>
   </div>
 
-  <!-- Modal Lupa Password (Simulasi) -->
+  <!-- Modal Lupa Password (Firebase Auth Asli) -->
   <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content" style="border-radius: var(--radius-md); border: none; background: var(--soft-white); box-shadow: var(--shadow-md);">
         <div class="modal-header" style="border-bottom: 1px solid var(--gray-200); padding: 16px 20px;">
-          <h5 class="modal-title serif" id="forgotPasswordModalLabel" style="color: var(--text-dark); font-weight: 700; font-size: 1.25rem;">Reset Password (Simulasi)</h5>
+          <h5 class="modal-title serif" id="forgotPasswordModalLabel" style="color: var(--text-dark); font-weight: 700; font-size: 1.25rem;">Reset Password</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 0.8rem;"></button>
         </div>
         <div class="modal-body" style="padding: 24px;">
-          <!-- Step 1: Input Email -->
           <div id="fp-step-email">
             <p style="color: var(--text-mid); font-size: 0.9rem; margin-bottom: 16px; line-height: 1.5;">
-              Masukkan email terdaftar Anda. Sistem simulasi akan memverifikasi email di `localStorage`.
+              Masukkan email terdaftar Anda. Kami akan mengirimkan email berisi tautan reset sandi dari Firebase Auth.
             </p>
             <div class="auth-input-group mb-3">
               <div style="position: relative;">
@@ -526,22 +525,7 @@
               </div>
               <div class="field-feedback" id="fb-fp-email" style="display: block; color: var(--pink-deep); font-size: 0.8rem; margin-top: 4px;"></div>
             </div>
-            <button type="button" class="auth-btn" onclick="verifyFpEmail()" style="background: #A6264C; color: white;">Verifikasi Email 🌸</button>
-          </div>
-          
-          <!-- Step 2: New Password -->
-          <div id="fp-step-password" style="display: none;">
-            <p style="color: var(--text-mid); font-size: 0.9rem; margin-bottom: 16px; line-height: 1.5;">
-              Email terverifikasi! Silakan masukkan password baru Anda.
-            </p>
-            <div class="auth-input-group mb-3">
-              <div style="position: relative;">
-                <span class="input-prefix">🔒</span>
-                <input class="auth-input" type="password" id="fp-new-password" placeholder="Password Baru (min. 6 karakter)" style="padding-left: 40px;" />
-              </div>
-              <div class="field-feedback" id="fb-fp-password" style="display: block; color: var(--pink-deep); font-size: 0.8rem; margin-top: 4px;"></div>
-            </div>
-            <button type="button" class="auth-btn" onclick="resetFpPassword()" style="background: #A6264C; color: white;">Simpan Password Baru ✨</button>
+            <button type="button" class="auth-btn" onclick="sendRealPasswordReset()" style="background: #A6264C; color: white;">Kirim Link Reset 🌸</button>
           </div>
         </div>
       </div>
@@ -561,30 +545,16 @@
   <script src="firebase-setup.js"></script>
 
   <script>
-    // Seed a default email for the Forget Password simulation on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      if (!localStorage.getItem('registered_email_user@example.com')) {
-        localStorage.setItem('registered_email_user@example.com', 'password123');
-      }
-    });
-
-    let verifiedFpEmail = '';
-
     function showForgotPasswordModal(e) {
       e.preventDefault();
-      verifiedFpEmail = '';
       document.getElementById('fp-email').value = '';
-      document.getElementById('fp-new-password').value = '';
       document.getElementById('fb-fp-email').textContent = '';
-      document.getElementById('fb-fp-password').textContent = '';
-      document.getElementById('fp-step-email').style.display = 'block';
-      document.getElementById('fp-step-password').style.display = 'none';
       
       const modal = new bootstrap.Modal(document.getElementById('forgotPasswordModal'));
       modal.show();
     }
 
-    function verifyFpEmail() {
+    async function sendRealPasswordReset() {
       const emailInput = document.getElementById('fp-email').value.trim().toLowerCase();
       const feedback = document.getElementById('fb-fp-email');
       feedback.textContent = '';
@@ -594,34 +564,22 @@
         return;
       }
       
-      const storedVal = localStorage.getItem('registered_email_' + emailInput);
-      if (storedVal === null) {
-        feedback.textContent = 'Email tidak ditemukan di localStorage! Gunakan user@example.com atau daftar akun baru.';
-      } else {
-        verifiedFpEmail = emailInput;
-        document.getElementById('fp-step-email').style.display = 'none';
-        document.getElementById('fp-step-password').style.display = 'block';
-      }
-    }
-
-    function resetFpPassword() {
-      const newPw = document.getElementById('fp-new-password').value;
-      const feedback = document.getElementById('fb-fp-password');
-      feedback.textContent = '';
-      
-      if (newPw.length < 6) {
-        feedback.textContent = 'Password minimal 6 karakter!';
-        return;
-      }
-      
-      localStorage.setItem('registered_email_' + verifiedFpEmail, newPw);
-      showSuccess(`Password untuk ${verifiedFpEmail} berhasil di-reset secara lokal!`);
-      
-      // Close modal
-      const modalEl = document.getElementById('forgotPasswordModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl);
-      if (modalInstance) {
-        modalInstance.hide();
+      try {
+        await auth.sendPasswordResetEmail(emailInput);
+        showSuccess(`Email pemulihan password berhasil dikirim ke ${emailInput}! Silakan periksa inbox Anda. 🌸`);
+        
+        // Close modal
+        const modalEl = document.getElementById('forgotPasswordModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) {
+          modalInstance.hide();
+        }
+      } catch (error) {
+        if (error.code === 'auth/user-not-found') {
+          feedback.textContent = 'Email tidak terdaftar!';
+        } else {
+          feedback.textContent = error.message;
+        }
       }
     }
 
@@ -764,9 +722,6 @@
           createdAt: new Date().toISOString()
         });
 
-        // Save to localStorage for Forget Password simulation
-        localStorage.setItem('registered_email_' + email, password);
-
         showSuccess(`Akun berhasil dibuat! Selamat datang, ${name} 🌸`);
         setTimeout(() => { window.location.replace('app.html'); }, 1200);
       } catch (error) {
@@ -817,14 +772,6 @@
         showSuccess(`Selamat datang kembali! 💕`);
         setTimeout(() => window.location.replace('app.html'), 800);
       } catch (error) {
-        // Fallback simulation check in localStorage
-        const storedPw = localStorage.getItem('registered_email_' + input);
-        if (storedPw && storedPw === password) {
-          showSuccess(`Selamat datang kembali (Simulasi)! 💕`);
-          setTimeout(() => window.location.replace('app.html'), 800);
-          return;
-        }
-
         setLoading('login-btn', false);
         if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
           setFeedback('fb-login-pw', 'Email atau password salah!');
