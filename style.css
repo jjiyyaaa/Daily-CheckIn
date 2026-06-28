@@ -128,12 +128,13 @@ h4 {
 
 .btn-outline {
   background: transparent;
-  color: var(--pink-deep);
-  border: 2px solid var(--pink-deep);
+  color: #A6264C;
+  border: 2px solid #A6264C;
 }
 
 .btn-outline:hover {
   background: var(--pink-light);
+  color: #A6264C;
 }
 
 .btn-sm {
