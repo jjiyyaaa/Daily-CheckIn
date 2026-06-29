@@ -21,12 +21,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
   <!-- Preload Critical Stylesheets -->
-  <link href="style.css" rel="stylesheet" media="print" onload="this.media='all'" />
-  <link href="landing.css" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link rel="preload" href="style.css" as="style" />
+  <link rel="preload" href="landing.css" as="style" />
 
   <!-- Critical CSS -->
-  <link href="style.css" rel="stylesheet" />
-  <link href="landing.css" rel="stylesheet" />
+  <link href="style.css" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link href="landing.css" rel="stylesheet" media="print" onload="this.media='all'" />
 
   <!-- Non-Critical CSS (Loaded Asynchronously) -->
   <div onclick="window.location.href='mailto:zivolution.projects@gmail.com?subject=Tanya%20Daily%20Check-In'"
