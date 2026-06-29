@@ -834,11 +834,19 @@
     }
 
     // Auto-fetch on load (fully asynchronous, non-blocking for FCP)
+    // KODE BARU (Biar browser gak dipaksa mikir geometri pas loading awal):
     window.addEventListener('load', () => {
-      setTimeout(() => {
-        fetchLandingQuote();
-        fetchActivity();
-      }, 100);
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => {
+          fetchLandingQuote();
+          fetchActivity();
+        });
+      } else {
+        setTimeout(() => {
+          fetchLandingQuote();
+          fetchActivity();
+        }, 400); // Naikin dikit delay-nya biar aman dari forced layout
+      }
     });
   </script>
 
